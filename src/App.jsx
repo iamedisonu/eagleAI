@@ -22,7 +22,7 @@ SECTIONS:
 */
 
 import { useState } from 'react';
-import { AppProvider } from './context/AppContext';
+import { AppProvider } from './context/AppProvider';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';
 import Projects from './components/projects/Projects';
