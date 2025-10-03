@@ -42,11 +42,12 @@ const Button = ({
   
   // Variant classes
   const variantClasses = {
-    primary: 'bg-[#003459] text-white hover:bg-[#002D4D] focus:ring-[#003459] shadow-md hover:shadow-lg',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-md hover:shadow-lg',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-md hover:shadow-lg',
-    default: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500'
+    primary: 'bg-oc-maroon text-brand-white hover:bg-oc-maroon/90 focus:ring-oc-maroon shadow-md hover:shadow-lg',
+    secondary: 'bg-oc-silver text-brand-black hover:bg-oc-silver/80 focus:ring-oc-silver',
+    success: 'bg-oc-sky text-brand-white hover:bg-oc-sky/80 focus:ring-oc-sky shadow-md hover:shadow-lg',
+    danger: 'bg-oc-salmon text-brand-white hover:bg-oc-salmon/80 focus:ring-oc-salmon shadow-md hover:shadow-lg',
+    warning: 'bg-oc-marigold text-brand-black hover:bg-oc-marigold/80 focus:ring-oc-marigold shadow-md hover:shadow-lg',
+    default: 'bg-brand-white text-brand-black border border-neutral-300 hover:bg-brand-nearwhite-1 focus:ring-neutral-500'
   };
   
   // Size classes

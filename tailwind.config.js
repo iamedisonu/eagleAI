@@ -24,35 +24,59 @@ export default {
   theme: {
     extend: {
       colors: {
-        // OC Brand Colors
-        'oc-blue': '#003459',
-        'oc-red': '#C8102E',
-        'oc-gray': '#6B7280',
+        // OC Brand Colors (Oklahoma Christian University Official)
+        // Primary Colors
+        'brand-maroon': '#811429',
+        'brand-crimson': '#660000',
+        'brand-maroon-deep': '#48111C',
+
+        // Neutrals
+        'brand-black': '#000000',
+        'brand-white': '#FFFFFF',
+        'brand-nearwhite-1': '#F9F9F9',
+        'brand-nearwhite-2': '#F4F4F4',
+
+        // Accents
+        'accent-teal': '#5EC4B6',
+        'accent-teal-soft': '#BDE3DC',
+        'accent-coral': '#FF937A',
+        'accent-gold': '#F9C634',
+        'accent-bluegray-soft': '#D5DFE7',
+        'accent-bluegray': '#5C7A87',
+
+        // Athletics
+        'athletic-silver': '#CCCCCC',
+        'athletic-tan': '#E2D79B',
+
+        // Special overlay
+        'brand-overlay': 'rgba(128, 126, 163, 0.6)',
         
         // Custom color palette
+        // Scales derived from brand maroon and neutrals (optional)
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#FBF4F5',
+          100: '#F6E9EB',
+          200: '#E9C9CF',
+          300: '#DAA2AB',
+          400: '#C46B76',
+          500: '#A8394A',
+          600: '#811429', // brand-maroon
+          700: '#5F0F1F',
+          800: '#48111C', // brand-maroon-deep
+          900: '#2A0A10',
+          950: '#180609',
         },
-        secondary: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
+        neutral: {
+          50: '#FFFFFF',
+          100: '#F9F9F9',
+          200: '#F4F4F4',
+          300: '#E9E9E9',
+          400: '#D9D9D9',
+          500: '#BFBFBF',
+          600: '#999999',
+          700: '#666666',
+          800: '#333333',
+          900: '#000000',
         }
       },
       fontFamily: {

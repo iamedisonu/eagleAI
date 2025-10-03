@@ -34,11 +34,11 @@ const Badge = ({
   
   // Variant classes
   const variantClasses = {
-    default: 'bg-gray-100 text-gray-800',
-    primary: 'bg-[#003459] text-white',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800'
+    default: 'bg-neutral-100 text-neutral-800',
+    primary: 'bg-brand-maroon text-brand-white',
+    success: 'bg-accent-teal-soft text-accent-teal',
+    warning: 'bg-accent-gold/20 text-accent-gold',
+    danger: 'bg-accent-coral/20 text-accent-coral'
   };
   
   // Size classes

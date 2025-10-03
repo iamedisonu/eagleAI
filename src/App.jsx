@@ -71,25 +71,25 @@ const App = () => {
 
   return (
     <AppProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
+            <header className="bg-brand-maroon text-brand-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo and title */}
               <div className="flex items-center gap-3">
-                <div className="bg-[#003459] p-2 rounded-lg">
-                  <Brain className="text-white" size={24} />
+                <div className="bg-athletic-silver p-2 rounded-lg">
+                  <Brain className="text-brand-white" size={24} />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-[#003459]">EagleAI</h1>
-                  <p className="text-xs text-gray-600">Career Intelligence Platform</p>
+                  <h1 className="text-xl font-bold text-brand-white">EagleAI</h1>
+                  <p className="text-xs text-brand-nearwhite-1">Career Intelligence Platform</p>
                 </div>
               </div>
 
               {/* Mobile menu button */}
               <button
-                className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+                    className="md:hidden p-2 rounded-lg text-brand-white hover:bg-athletic-silver/20"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -104,11 +104,11 @@ const App = () => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                      activeTab === item.id
-                        ? 'bg-[#003459] text-white shadow-md'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-[#003459]'
-                    }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                          activeTab === item.id
+                            ? 'bg-athletic-silver text-brand-white shadow-md'
+                            : 'text-brand-white/90 hover:bg-athletic-silver/20 hover:text-brand-white'
+                        }`}
                   >
                     <Icon size={18} />
                     {item.label}
@@ -129,11 +129,11 @@ const App = () => {
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg font-medium transition-all ${
-                        activeTab === item.id
-                          ? 'bg-[#003459] text-white shadow-md'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-[#003459]'
-                      }`}
+                          className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg font-medium transition-all ${
+                            activeTab === item.id
+                              ? 'bg-athletic-silver text-brand-white shadow-md'
+                              : 'text-brand-white/90 hover:bg-athletic-silver/20 hover:text-brand-white'
+                          }`}
                     >
                       <Icon size={20} />
                       {item.label}
@@ -151,13 +151,13 @@ const App = () => {
         </main>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 mt-12">
+            <footer className="bg-brand-maroon text-brand-white mt-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="text-center text-gray-600">
+            <div className="text-center">
               <p className="text-sm">
                 © 2024 EagleAI - AI-Powered Career Intelligence Platform
               </p>
-              <p className="text-xs mt-1">
+              <p className="text-xs mt-1 text-brand-nearwhite-1">
                 Empowering students with data-driven career insights
               </p>
             </div>

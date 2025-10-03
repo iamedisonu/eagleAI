@@ -35,17 +35,17 @@ const Career = () => {
     // Main container with responsive spacing
     <div className="space-y-4 md:space-y-6">
       {/* White card container */}
-      <div className="bg-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+      <div className="bg-brand-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
         {/* Header with trending up icon */}
         <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-          <div className="bg-[#003459] p-2 md:p-3 rounded-lg flex-shrink-0">
-            <TrendingUp className="text-white" size={20} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-xl md:text-2xl font-bold text-[#003459] truncate">
+        <div className="bg-oc-maroon p-2 md:p-3 rounded-lg flex-shrink-0">
+          <TrendingUp className="text-brand-white" size={20} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl md:text-2xl font-bold text-oc-maroon truncate">
               AI Career Intelligence Platform
             </h2>
-            <p className="text-gray-600 text-xs md:text-sm mt-0.5 md:mt-0 break-words">
+            <p className="text-neutral-600 text-xs md:text-sm mt-0.5 md:mt-0 break-words">
               Real-time market analysis and personalized career pathway optimization
             </p>
           </div>
