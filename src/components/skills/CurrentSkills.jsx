@@ -24,7 +24,7 @@ RESPONSIVE BEHAVIOR:
 */
 
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 import { Target } from 'lucide-react';
 import ProgressBar from '../shared/ProgressBar';
 import Badge from '../shared/Badge';

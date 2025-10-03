@@ -25,7 +25,7 @@ USAGE:
 
 import { Users } from 'lucide-react';
 import MentorCard from './MentorCard';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 
 const Mentorship = () => {
   // Get mentorship data from context

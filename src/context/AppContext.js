@@ -1,6 +1,6 @@
 /*
 ============================================================================
-FILE: src/context/AppContext.jsx
+FILE: src/context/AppContext.js
 ============================================================================
 PURPOSE:
   Defines the AppContext and custom hook for consuming it throughout the app.
@@ -8,7 +8,7 @@ PURPOSE:
   
 IMPORTANT:
   Keep this file separate from AppProvider.jsx to maintain Vite HMR compatibility.
-  Mixing component exports with hook exports causes preamble detection errors.
+  Mixing component exports with hook exports can cause preamble detection errors.
 ============================================================================
 */
 
@@ -44,3 +44,5 @@ export const useApp = () => {
   
   return context;
 };
+
+

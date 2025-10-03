@@ -25,7 +25,7 @@ RESPONSIVE BEHAVIOR:
 */
 
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 import { Sparkles, Lightbulb, Star } from 'lucide-react';
 import Button from '../shared/Button';
 

@@ -25,7 +25,7 @@ RESPONSIVE BEHAVIOR:
 */
 
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 import { Zap, Clock, BarChart3, Sparkles } from 'lucide-react';
 import Button from '../shared/Button';
 import Badge from '../shared/Badge';

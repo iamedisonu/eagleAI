@@ -24,7 +24,7 @@ USAGE:
 
 import { Briefcase } from 'lucide-react';
 import ProjectCard from './ProjectCard';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 
 const Projects = () => {
   // Get projects data from context

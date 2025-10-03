@@ -22,6 +22,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    strictPort: false,
     open: true,
     host: true
   },
@@ -43,3 +44,4 @@ export default defineConfig({
     }
   }
 })
+

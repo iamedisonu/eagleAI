@@ -25,7 +25,7 @@ USAGE:
 
 import { TrendingUp } from 'lucide-react';
 import CareerCard from './CareerCard';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 
 const Career = () => {
   // Get careers data from context

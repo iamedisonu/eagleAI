@@ -23,7 +23,7 @@ RESPONSIVE BEHAVIOR:
 */
 
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.js';
 import { Clock, Brain } from 'lucide-react';
 import Badge from '../shared/Badge';
 
