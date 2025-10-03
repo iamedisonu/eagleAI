@@ -22,7 +22,6 @@ USAGE:
 ============================================================================
 */
 
-import React from 'react';
 import { Briefcase } from 'lucide-react';
 import ProjectCard from './ProjectCard';
 import { useApp } from '../../context/AppContext';

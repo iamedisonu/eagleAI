@@ -21,7 +21,7 @@ SECTIONS:
 ============================================================================
 */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AppProvider } from './context/AppContext';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';

@@ -21,7 +21,7 @@ DATA STRUCTURE:
 ============================================================================
 */
 
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 
 // Create the context
 const AppContext = createContext();
@@ -224,21 +224,21 @@ const mockData = {
         deadline: "December 2024",
         prep: "Not Started",
         aiReady: "25%",
-        aiReady: "Focus on EC2, S3, and VPC fundamentals first. Complete AWS free tier practice labs."
+        aiAdvice: "Focus on EC2, S3, and VPC fundamentals first. Complete AWS free tier practice labs."
       },
       {
         name: "Google Data Analytics Certificate",
         deadline: "March 2025",
         prep: "In Progress",
         aiReady: "60%",
-        aiReady: "Great progress! Complete SQL and Tableau modules to reach 80% readiness."
+        aiAdvice: "Great progress! Complete SQL and Tableau modules to reach 80% readiness."
       },
       {
         name: "React Developer Certification",
         deadline: "June 2025",
         prep: "Planning",
         aiReady: "15%",
-        aiReady: "Start with React fundamentals and build 2-3 projects before attempting certification."
+        aiAdvice: "Start with React fundamentals and build 2-3 projects before attempting certification."
       }
     ]
   }

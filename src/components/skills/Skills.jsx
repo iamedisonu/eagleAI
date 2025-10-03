@@ -23,7 +23,6 @@ USAGE:
 ============================================================================
 */
 
-import React from 'react';
 import { Code } from 'lucide-react';
 import PrioritySkills from './PrioritySkills';
 import CurrentSkills from './CurrentSkills';

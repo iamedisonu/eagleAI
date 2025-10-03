@@ -23,7 +23,6 @@ USAGE:
 ============================================================================
 */
 
-import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import CareerCard from './CareerCard';
 import { useApp } from '../../context/AppContext';

@@ -24,7 +24,6 @@ RESPONSIVE BEHAVIOR:
 ============================================================================
 */
 
-import React from 'react';
 import { Brain } from 'lucide-react';
 import UpcomingCourses from './UpcomingCourses';
 import ElectiveRecommendations from './ElectiveRecommendations';

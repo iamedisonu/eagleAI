@@ -23,7 +23,6 @@ USAGE:
 ============================================================================
 */
 
-import React from 'react';
 import { Users } from 'lucide-react';
 import MentorCard from './MentorCard';
 import { useApp } from '../../context/AppContext';
