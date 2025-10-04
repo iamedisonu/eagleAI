@@ -38,23 +38,23 @@ const Button = ({
   ...props 
 }) => {
   // Base button classes
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   // Variant classes
   const variantClasses = {
-    primary: 'bg-oc-maroon text-brand-white hover:bg-oc-maroon/90 focus:ring-oc-maroon shadow-md hover:shadow-lg',
-    secondary: 'bg-oc-silver text-brand-black hover:bg-oc-silver/80 focus:ring-oc-silver',
-    success: 'bg-oc-sky text-brand-white hover:bg-oc-sky/80 focus:ring-oc-sky shadow-md hover:shadow-lg',
-    danger: 'bg-oc-salmon text-brand-white hover:bg-oc-salmon/80 focus:ring-oc-salmon shadow-md hover:shadow-lg',
-    warning: 'bg-oc-marigold text-brand-black hover:bg-oc-marigold/80 focus:ring-oc-marigold shadow-md hover:shadow-lg',
+    primary: 'bg-brand-maroon text-brand-white hover:bg-brand-crimson focus:ring-brand-maroon shadow-md hover:shadow-lg',
+    secondary: 'bg-athletic-silver text-brand-black hover:bg-athletic-silver/80 focus:ring-athletic-silver',
+    success: 'bg-accent-teal text-brand-white hover:bg-accent-teal/80 focus:ring-accent-teal shadow-md hover:shadow-lg',
+    danger: 'bg-brand-crimson text-brand-white hover:bg-brand-maroon-deep focus:ring-brand-crimson shadow-md hover:shadow-lg',
+    warning: 'bg-accent-gold text-brand-black hover:bg-accent-gold/80 focus:ring-accent-gold shadow-md hover:shadow-lg',
     default: 'bg-brand-white text-brand-black border border-neutral-300 hover:bg-brand-nearwhite-1 focus:ring-neutral-500'
   };
   
   // Size classes
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-5 py-3 text-sm',
+    lg: 'px-6 py-4 text-base'
   };
   
   // Icon size classes

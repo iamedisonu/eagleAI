@@ -28,12 +28,14 @@ import Mentorship from './components/mentorship/Mentorship';
 import Projects from './components/projects/Projects';
 import Roadmap from './components/roadmap/Roadmap';
 import Skills from './components/skills/Skills';
+import ResumeReview from './components/resume/ResumeReview';
 import { 
   TrendingUp, 
   Users, 
   Briefcase, 
   Brain, 
   Code,
+  FileText,
   Menu,
   X
 } from 'lucide-react';
@@ -48,7 +50,8 @@ const App = () => {
     { id: 'mentorship', label: 'Mentorship', icon: Users },
     { id: 'projects', label: 'Projects', icon: Briefcase },
     { id: 'roadmap', label: 'Roadmap', icon: Brain },
-    { id: 'skills', label: 'Skills', icon: Code }
+    { id: 'skills', label: 'Skills', icon: Code },
+    { id: 'resume', label: 'Resume Review', icon: FileText }
   ];
 
   // Render the active component
@@ -64,6 +67,8 @@ const App = () => {
         return <Roadmap />;
       case 'skills':
         return <Skills />;
+      case 'resume':
+        return <ResumeReview />;
       default:
         return <Career />;
     }
@@ -73,44 +78,44 @@ const App = () => {
     <AppProvider>
       <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
-            <header className="bg-brand-maroon text-brand-white shadow-sm">
-          <div className="max-w-full mx-auto px-2 sm:px-3 lg:px-4">
-            <div className="flex justify-between items-center h-16">
+            <header className="bg-brand-maroon text-brand-white shadow-lg">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-20">
               {/* Logo and title */}
-              <div className="flex items-center gap-3">
-                <div className="bg-athletic-silver p-2 rounded-lg">
-                  <Brain className="text-brand-white" size={24} />
+              <div className="flex items-center gap-4">
+                <div className="bg-gradient-to-br from-brand-white to-brand-nearwhite-1 p-3 rounded-xl shadow-md">
+                  <Brain className="text-brand-maroon" size={28} />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-brand-white">EagleAI</h1>
-                  <p className="text-xs text-brand-nearwhite-1">Career Intelligence Platform</p>
+                  <h1 className="text-2xl font-bold text-brand-white tracking-tight">EagleAI</h1>
+                  <p className="text-sm text-brand-nearwhite-1 font-medium">Career Intelligence Platform</p>
                 </div>
               </div>
 
               {/* Mobile menu button */}
               <button
-                    className="md:hidden p-2 rounded-lg text-brand-white hover:bg-athletic-silver/20"
+                    className="md:hidden p-3 rounded-xl text-brand-white hover:bg-brand-white/10 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
               </button>
             </div>
 
             {/* Navigation - Desktop */}
-            <nav className="hidden md:flex space-x-1 pb-4">
+            <nav className="hidden md:flex space-x-2 pb-6">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                        className={`flex items-center gap-3 px-5 py-3 rounded-xl font-semibold transition-all duration-200 ${
                           activeTab === item.id
-                            ? 'bg-athletic-silver text-brand-white shadow-md'
-                            : 'text-brand-white/90 hover:bg-athletic-silver/20 hover:text-brand-white'
+                            ? 'bg-brand-white text-brand-maroon shadow-lg transform scale-105'
+                            : 'text-brand-white/90 hover:bg-brand-white/10 hover:text-brand-white hover:scale-105'
                         }`}
                   >
-                    <Icon size={18} />
+                    <Icon size={20} />
                     {item.label}
                   </button>
                 );
@@ -119,7 +124,7 @@ const App = () => {
 
             {/* Navigation - Mobile */}
             {isMobileMenuOpen && (
-              <nav className="md:hidden space-y-1 pb-4">
+              <nav className="md:hidden space-y-2 pb-6">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -129,13 +134,13 @@ const App = () => {
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                          className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg font-medium transition-all ${
+                          className={`flex items-center gap-4 w-full px-5 py-4 rounded-xl font-semibold transition-all duration-200 ${
                             activeTab === item.id
-                              ? 'bg-athletic-silver text-brand-white shadow-md'
-                              : 'text-brand-white/90 hover:bg-athletic-silver/20 hover:text-brand-white'
+                              ? 'bg-brand-white text-brand-maroon shadow-lg'
+                              : 'text-brand-white/90 hover:bg-brand-white/10 hover:text-brand-white'
                           }`}
                     >
-                      <Icon size={20} />
+                      <Icon size={22} />
                       {item.label}
                     </button>
                   );
