@@ -49,7 +49,6 @@ import {
 } from 'lucide-react';
 
 const App = () => {
-  console.log('App component is rendering...');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -92,20 +91,6 @@ const App = () => {
     <AppProvider>
       <EagleMentorProvider>
         <div className="min-h-screen bg-brand-nearwhite-1">
-          {/* Debug indicator */}
-          <div style={{
-            position: 'fixed',
-            top: '10px',
-            left: '10px',
-            background: 'green',
-            color: 'white',
-            padding: '5px 10px',
-            borderRadius: '5px',
-            fontSize: '12px',
-            zIndex: 9999
-          }}>
-            EagleAI is loading...
-          </div>
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-lg">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
