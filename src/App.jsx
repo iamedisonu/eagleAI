@@ -23,13 +23,21 @@ SECTIONS:
 
 import { useState } from 'react';
 import { AppProvider } from './context/AppProvider';
+import { EagleMentorProvider } from './context/EagleMentorProvider';
+import Dashboard from './components/dashboard/Dashboard';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';
 import Projects from './components/projects/Projects';
 import Roadmap from './components/roadmap/Roadmap';
 import Skills from './components/skills/Skills';
 import ResumeReview from './components/resume/ResumeReview';
+import NotificationBell from './components/shared/NotificationBell';
+import UniversalSearch from './components/shared/UniversalSearch';
+import FloatingMentorButton from './components/eagle-mentor/FloatingMentorButton';
+import EagleMentorPanel from './components/eagle-mentor/EagleMentorPanel';
+import ErrorBoundary from './components/ErrorBoundary';
 import { 
+  Home,
   TrendingUp, 
   Users, 
   Briefcase, 
@@ -41,11 +49,14 @@ import {
 } from 'lucide-react';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('career');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Navigation items with icons
   const navigationItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'career', label: 'Career', icon: TrendingUp },
     { id: 'mentorship', label: 'Mentorship', icon: Users },
     { id: 'projects', label: 'Projects', icon: Briefcase },
@@ -57,6 +68,8 @@ const App = () => {
   // Render the active component
   const renderActiveComponent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard onNavigate={setActiveTab} />;
       case 'career':
         return <Career />;
       case 'mentorship':
@@ -70,13 +83,14 @@ const App = () => {
       case 'resume':
         return <ResumeReview />;
       default:
-        return <Career />;
+        return <Dashboard onNavigate={setActiveTab} />;
     }
   };
 
   return (
     <AppProvider>
-      <div className="min-h-screen bg-brand-nearwhite-1">
+      <EagleMentorProvider>
+        <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-lg">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -90,6 +104,20 @@ const App = () => {
                   <h1 className="text-2xl font-bold text-brand-white tracking-tight">EagleAI</h1>
                   <p className="text-sm text-brand-nearwhite-1 font-medium">Career Intelligence Platform</p>
                 </div>
+              </div>
+
+              {/* Desktop: Search and Notifications */}
+              <div className="hidden md:flex items-center gap-3">
+                <UniversalSearch 
+                  isOpen={isSearchOpen}
+                  onToggle={() => setIsSearchOpen(!isSearchOpen)}
+                  onClose={() => setIsSearchOpen(false)}
+                />
+                <NotificationBell 
+                  isOpen={isNotificationOpen}
+                  onToggle={() => setIsNotificationOpen(!isNotificationOpen)}
+                  onClose={() => setIsNotificationOpen(false)}
+                />
               </div>
 
               {/* Mobile menu button */}
@@ -168,7 +196,26 @@ const App = () => {
             </div>
           </div>
         </footer>
+
+        {/* AI Disclaimer Banner */}
+        <div className="bg-accent-gold/10 border-t border-accent-gold/20 py-3">
+          <div className="max-w-full mx-auto px-2 sm:px-3 lg:px-4">
+            <div className="flex items-center justify-center gap-2 text-center">
+              <div className="w-2 h-2 bg-accent-gold rounded-full flex-shrink-0"></div>
+              <p className="text-xs text-gray-600 max-w-4xl">
+                <span className="font-semibold">EagleAI can make mistakes.</span> Check important info.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Eagle Mentor Components */}
+        <ErrorBoundary>
+          <FloatingMentorButton />
+          <EagleMentorPanel />
+        </ErrorBoundary>
       </div>
+      </EagleMentorProvider>
     </AppProvider>
   );
 };

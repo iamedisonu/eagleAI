@@ -62,9 +62,9 @@ const ResumeUpload = ({ onFileUpload }) => {
       return;
     }
     
-    // Validate file size (1MB limit)
-    if (file.size > 1024 * 1024) {
-      setError('File size must be less than 1MB.');
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB.');
       return;
     }
     
@@ -153,7 +153,7 @@ const ResumeUpload = ({ onFileUpload }) => {
             </div>
             <div className="flex items-center gap-2">
               <FileText className="text-brand-maroon" size={16} />
-              <span>Maximum file size: 1MB</span>
+              <span>Maximum file size: 5MB</span>
             </div>
             <div className="flex items-center gap-2">
               <FileText className="text-brand-maroon" size={16} />
