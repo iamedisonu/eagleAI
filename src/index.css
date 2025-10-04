@@ -1,19 +1,3 @@
-/* Debug: Add basic styles to ensure CSS is loading */
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f0f0f0;
-  font-family: Arial, sans-serif;
-}
-
-.debug-test {
-  background: red;
-  color: white;
-  padding: 20px;
-  font-size: 24px;
-  text-align: center;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
