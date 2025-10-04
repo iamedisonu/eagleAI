@@ -38,7 +38,7 @@ import Badge from '../shared/Badge';
 const CareerCard = ({ career }) => {
   return (
     // Card with gradient background and hover effect
-    <div className="border-3 border-gray-300 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-[#003459] transition-all bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-2xl">
+    <div className="border-3 border-gray-300 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-brand-maroon transition-all bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-2xl">
       {/* Career header: title, salary, match score */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3 md:mb-4">
         {/* Career title and salary */}
@@ -46,12 +46,12 @@ const CareerCard = ({ career }) => {
           <h3 className="font-bold text-lg md:text-xl text-gray-800 mb-2 break-words">
             {career.title}
           </h3>
-          <p className="text-base md:text-lg text-green-600 font-bold">
+          <p className="text-base md:text-lg text-brand-maroon font-bold">
             {career.avgSalary}
           </p>
         </div>
         {/* Career fit percentage badge with gradient */}
-        <div className="text-center bg-gradient-to-br from-[#003459] to-[#002D4D] text-white px-4 md:px-5 py-2 md:py-3 rounded-xl shadow-md flex-shrink-0 self-start sm:self-auto">
+        <div className="text-center bg-gradient-to-br from-brand-maroon to-brand-crimson text-white px-4 md:px-5 py-2 md:py-3 rounded-xl shadow-md flex-shrink-0 self-start sm:self-auto">
           <div className="text-2xl md:text-3xl font-bold">{career.match}%</div>
           <div className="text-xs font-semibold">Career Fit</div>
         </div>
@@ -60,27 +60,27 @@ const CareerCard = ({ career }) => {
       {/* Stats grid: job outlook and local openings */}
       <div className="grid grid-cols-2 gap-2 md:gap-3 mb-3 md:mb-4">
         {/* Job outlook stat */}
-        <div className="bg-green-50 border border-green-200 p-2 md:p-3 rounded-lg">
+        <div className="bg-accent-teal-soft border border-accent-teal p-2 md:p-3 rounded-lg">
           <div className="text-xs text-gray-600 mb-1 truncate">Job Outlook</div>
-          <div className="text-xs md:text-sm font-bold text-green-600 break-words">
+          <div className="text-xs md:text-sm font-bold text-accent-teal break-words">
             {career.outlook.split('(')[0]}
           </div>
         </div>
         {/* Local jobs stat */}
         <div className="bg-blue-50 border border-blue-200 p-2 md:p-3 rounded-lg">
           <div className="text-xs text-gray-600 mb-1 truncate">Local Openings</div>
-          <div className="text-xs md:text-sm font-bold text-[#003459]">
+          <div className="text-xs md:text-sm font-bold text-brand-maroon">
             {career.localJobs} jobs
           </div>
         </div>
       </div>
       
       {/* AI Career Forecast box */}
-      <div className="bg-gradient-to-r from-blue-50 to-white border-l-4 border-[#003459] p-3 md:p-4 rounded-lg mb-2 md:mb-3">
+      <div className="bg-gradient-to-r from-blue-50 to-white border-l-4 border-brand-maroon p-3 md:p-4 rounded-lg mb-2 md:mb-3">
         <div className="flex items-start gap-2">
-          <Brain size={16} className="text-[#003459] mt-0.5 flex-shrink-0" />
+          <Brain size={16} className="text-brand-maroon mt-0.5 flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-[#003459] mb-1">
+            <p className="text-xs font-bold text-brand-maroon mb-1">
               AI CAREER FORECAST
             </p>
             <p className="text-xs md:text-sm text-gray-700 break-words">

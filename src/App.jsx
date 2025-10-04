@@ -74,7 +74,7 @@ const App = () => {
       <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6">
             <div className="flex justify-between items-center h-16">
               {/* Logo and title */}
               <div className="flex items-center gap-3">
@@ -146,13 +146,13 @@ const App = () => {
         </header>
 
         {/* Main content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-6">
           {renderActiveComponent()}
         </main>
 
         {/* Footer */}
             <footer className="bg-brand-maroon text-brand-white mt-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-6">
             <div className="text-center">
               <p className="text-sm">
                 © 2024 EagleAI - AI-Powered Career Intelligence Platform

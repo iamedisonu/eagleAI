@@ -37,12 +37,12 @@ const Roadmap = () => {
         {/* Header section with OC blue icon and title */}
         <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
           {/* Brain icon in OC blue circle - flex-shrink-0 prevents squishing */}
-          <div className="bg-[#003459] p-2 md:p-3 rounded-lg flex-shrink-0">
+          <div className="bg-brand-maroon p-2 md:p-3 rounded-lg flex-shrink-0">
             <Brain className="text-white" size={20} />
           </div>
           {/* Title and subtitle with responsive text sizing */}
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl md:text-2xl font-bold text-[#003459] truncate">
+            <h2 className="text-xl md:text-2xl font-bold text-brand-maroon truncate">
               AI-Generated Academic Roadmap
             </h2>
             <p className="text-gray-600 text-xs md:text-sm mt-0.5 md:mt-0">

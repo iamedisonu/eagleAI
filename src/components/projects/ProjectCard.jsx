@@ -39,8 +39,8 @@ const ProjectCard = ({ project }) => {
   // Helper: Determine border color based on project status
   const getBorderColor = (status) => {
     switch (status) {
-      case 'active': return 'border-green-500 bg-gradient-to-br from-green-50 to-white';
-      case 'planned': return 'border-[#003459] bg-gradient-to-br from-blue-50 to-white';
+      case 'active': return 'border-accent-teal bg-gradient-to-br from-accent-teal-soft to-white';
+      case 'planned': return 'border-brand-maroon bg-gradient-to-br from-blue-50 to-white';
       default: return 'border-gray-300 bg-gradient-to-br from-gray-50 to-white';
     }
   };
@@ -83,7 +83,7 @@ const ProjectCard = ({ project }) => {
       {project.progress > 0 && (
         <ProgressBar 
           progress={project.progress}
-          color="green"
+          color="blue"
           size="md"
           className="mb-3 md:mb-4"
         />
@@ -94,9 +94,9 @@ const ProjectCard = ({ project }) => {
         {/* AI Suggestion box */}
         <div className="bg-white border-2 border-blue-300 p-3 md:p-4 rounded-lg">
           <div className="flex items-start gap-2">
-            <Lightbulb size={16} className="text-[#C8102E] mt-0.5 flex-shrink-0" />
+            <Lightbulb size={16} className="text-brand-crimson mt-0.5 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-[#003459] mb-1">AI SUGGESTION</p>
+              <p className="text-xs font-bold text-brand-maroon mb-1">AI SUGGESTION</p>
               <p className="text-xs md:text-sm text-gray-700 break-words">
                 {project.aiSuggestion}
               </p>
@@ -105,11 +105,11 @@ const ProjectCard = ({ project }) => {
         </div>
         
         {/* Next Step box */}
-        <div className="bg-blue-50 border-l-4 border-[#003459] p-2 md:p-3 rounded">
+        <div className="bg-blue-50 border-l-4 border-brand-maroon p-2 md:p-3 rounded">
           <div className="flex items-start gap-2">
-            <Zap size={14} className="text-[#003459] mt-0.5 flex-shrink-0" />
+            <Zap size={14} className="text-brand-maroon mt-0.5 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-[#003459] mb-1">NEXT STEP</p>
+              <p className="text-xs font-bold text-brand-maroon mb-1">NEXT STEP</p>
               <p className="text-xs md:text-sm text-gray-700 break-words">
                 {project.aiNextStep}
               </p>
@@ -118,11 +118,11 @@ const ProjectCard = ({ project }) => {
         </div>
         
         {/* Career Impact box */}
-        <div className="bg-yellow-50 border-l-4 border-[#C8102E] p-2 md:p-3 rounded">
+        <div className="bg-yellow-50 border-l-4 border-brand-crimson p-2 md:p-3 rounded">
           <div className="flex items-start gap-2">
-            <Star size={14} className="text-[#C8102E] mt-0.5 flex-shrink-0" />
+            <Star size={14} className="text-brand-crimson mt-0.5 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-[#C8102E] mb-1">CAREER IMPACT</p>
+              <p className="text-xs font-bold text-brand-crimson mb-1">CAREER IMPACT</p>
               <p className="text-xs md:text-sm text-gray-700 break-words">
                 {project.aiImpact}
               </p>

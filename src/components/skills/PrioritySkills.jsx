@@ -37,8 +37,8 @@ const PrioritySkills = () => {
   return (
     <div className="mb-6 md:mb-8">
       {/* Section header */}
-      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-[#003459]">
-        <Zap className="text-[#C8102E] flex-shrink-0" size={18} />
+      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-brand-maroon">
+        <Zap className="text-brand-crimson flex-shrink-0" size={18} />
         <span className="truncate">Priority Skills - AI Market Intelligence</span>
       </h3>
       
@@ -47,7 +47,7 @@ const PrioritySkills = () => {
         {skills.recommended.map((skill, idx) => (
           <div 
             key={idx} 
-            className="border-2 border-[#C8102E] bg-gradient-to-r from-yellow-50 via-white to-yellow-50 p-3 md:p-5 rounded-lg md:rounded-xl shadow-md hover:shadow-xl transition-all"
+            className="border-2 border-brand-crimson bg-gradient-to-r from-yellow-50 via-white to-yellow-50 p-3 md:p-5 rounded-lg md:rounded-xl shadow-md hover:shadow-xl transition-all"
           >
             {/* Skill header and info */}
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-3 mb-2 md:mb-3">
@@ -79,7 +79,7 @@ const PrioritySkills = () => {
                 </div>
               </div>
               {/* Career match score badge */}
-              <div className="text-center bg-[#003459] text-white px-3 md:px-4 py-2 md:py-3 rounded-lg flex-shrink-0 self-start lg:self-auto">
+              <div className="text-center bg-gradient-to-br from-brand-maroon to-brand-crimson text-white px-3 md:px-4 py-2 md:py-3 rounded-lg flex-shrink-0 self-start lg:self-auto">
                 <div className="text-xl md:text-2xl font-bold">{skill.aiMatch}</div>
                 <div className="text-xs">Career Match</div>
               </div>

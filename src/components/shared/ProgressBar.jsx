@@ -49,7 +49,7 @@ const ProgressBar = ({
   
   // Color classes for the progress fill
   const colorClasses = {
-    blue: 'bg-[#003459]',
+    blue: 'bg-brand-maroon',
     green: 'bg-green-500',
     red: 'bg-red-500',
     yellow: 'bg-yellow-500'

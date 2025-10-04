@@ -43,8 +43,8 @@ const UpcomingCourses = () => {
   return (
     <div>
       {/* Section header with clock icon */}
-      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-[#003459]">
-        <Clock className="text-[#003459]" size={18} />
+      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-brand-maroon">
+        <Clock className="text-brand-maroon" size={18} />
         Upcoming Required Courses
       </h3>
       
@@ -53,7 +53,7 @@ const UpcomingCourses = () => {
         {roadmap.upcoming.map(course => (
           <div 
             key={course.id} 
-            className="border-l-4 border-[#003459] bg-gradient-to-r from-blue-50 to-white p-3 md:p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+            className="border-l-4 border-brand-maroon bg-gradient-to-r from-blue-50 to-white p-3 md:p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
             {/* Course header: title, semester, and priority badge */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2 md:mb-3">
@@ -76,9 +76,9 @@ const UpcomingCourses = () => {
             
             {/* AI reasoning box */}
             <div className="bg-white border border-blue-200 rounded-lg p-2 md:p-3 flex items-start gap-2">
-              <Brain size={14} className="text-[#003459] mt-0.5 flex-shrink-0" />
+              <Brain size={14} className="text-brand-maroon mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-[#003459] mb-1">AI Reasoning:</p>
+                <p className="text-xs font-semibold text-brand-maroon mb-1">AI Reasoning:</p>
                 <p className="text-xs text-gray-700 break-words">{course.aiReason}</p>
               </div>
             </div>

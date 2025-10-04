@@ -36,8 +36,8 @@ const CertificationRoadmap = () => {
   return (
     <div>
       {/* Section header */}
-      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-[#003459]">
-        <Award className="text-[#C8102E] flex-shrink-0" size={18} />
+      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-brand-maroon">
+        <Award className="text-brand-crimson flex-shrink-0" size={18} />
         <span className="truncate">Certification Roadmap - AI Readiness Assessment</span>
       </h3>
       
@@ -66,9 +66,9 @@ const CertificationRoadmap = () => {
             </div>
             
             {/* AI readiness assessment box */}
-            <div className="bg-blue-50 border-l-4 border-[#003459] p-3 md:p-4 rounded-lg mb-2 md:mb-3">
+            <div className="bg-blue-50 border-l-4 border-brand-maroon p-3 md:p-4 rounded-lg mb-2 md:mb-3">
               <div className="flex items-start gap-2 mb-2">
-                <Brain size={14} className="text-[#003459] mt-0.5 flex-shrink-0" />
+                <Brain size={14} className="text-brand-maroon mt-0.5 flex-shrink-0" />
                 <p className="text-xs md:text-sm text-gray-700 break-words">
                   <span className="font-semibold">AI Readiness:</span> {cert.aiReady}
                 </p>
@@ -76,7 +76,7 @@ const CertificationRoadmap = () => {
               {/* Readiness progress bar */}
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div 
-                  className="bg-[#003459] h-2 rounded-full transition-all"
+                  className="bg-brand-maroon h-2 rounded-full transition-all"
                   style={{ width: cert.aiReady }}
                 />
               </div>

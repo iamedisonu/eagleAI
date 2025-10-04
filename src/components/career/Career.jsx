@@ -38,11 +38,11 @@ const Career = () => {
       <div className="bg-brand-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
         {/* Header with trending up icon */}
         <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-        <div className="bg-oc-maroon p-2 md:p-3 rounded-lg flex-shrink-0">
+        <div className="bg-brand-maroon p-2 md:p-3 rounded-lg flex-shrink-0">
           <TrendingUp className="text-brand-white" size={20} />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl md:text-2xl font-bold text-oc-maroon truncate">
+          <h2 className="text-xl md:text-2xl font-bold text-brand-maroon truncate">
               AI Career Intelligence Platform
             </h2>
             <p className="text-neutral-600 text-xs md:text-sm mt-0.5 md:mt-0 break-words">

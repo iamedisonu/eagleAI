@@ -36,8 +36,8 @@ const ElectiveRecommendations = () => {
   return (
     <div>
       {/* Section header with sparkles icon (OC red accent) */}
-      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-[#003459]">
-        <Sparkles className="text-[#C8102E] flex-shrink-0" size={18} />
+      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-brand-maroon">
+        <Sparkles className="text-brand-crimson flex-shrink-0" size={18} />
         <span className="truncate">AI-Recommended Electives</span>
       </h3>
       
@@ -46,7 +46,7 @@ const ElectiveRecommendations = () => {
         {roadmap.electives.map(elective => (
           <div 
             key={elective.id} 
-            className="border-2 border-gray-200 bg-white p-3 md:p-5 rounded-lg md:rounded-xl hover:shadow-xl transition-all hover:border-[#003459]"
+            className="border-2 border-gray-200 bg-white p-3 md:p-5 rounded-lg md:rounded-xl hover:shadow-xl transition-all hover:border-brand-maroon"
           >
             {/* Elective header: name and relevance badges */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2 md:mb-3">
@@ -57,7 +57,7 @@ const ElectiveRecommendations = () => {
               {/* Relevance score and confidence badges */}
               <div className="flex flex-col items-start sm:items-end gap-1 flex-shrink-0">
                 {/* Relevance percentage badge with gradient background */}
-                <div className="flex items-center gap-2 bg-gradient-to-r from-[#003459] to-[#002D4D] text-white px-2 md:px-3 py-1 rounded-full">
+                <div className="flex items-center gap-2 bg-gradient-to-r from-brand-maroon to-brand-maroon-deep text-white px-2 md:px-3 py-1 rounded-full">
                   <Star size={12} />
                   <span className="text-xs md:text-sm font-bold">{elective.relevance}%</span>
                 </div>
@@ -69,9 +69,9 @@ const ElectiveRecommendations = () => {
             </div>
             
             {/* AI analysis/reasoning box */}
-            <div className="bg-gradient-to-r from-yellow-50 to-white border-l-4 border-[#C8102E] p-2 md:p-3 rounded-lg mb-2 md:mb-3">
+            <div className="bg-gradient-to-r from-yellow-50 to-white border-l-4 border-brand-crimson p-2 md:p-3 rounded-lg mb-2 md:mb-3">
               <div className="flex items-start gap-2">
-                <Lightbulb size={14} className="text-[#C8102E] mt-0.5 flex-shrink-0" />
+                <Lightbulb size={14} className="text-brand-crimson mt-0.5 flex-shrink-0" />
                 <p className="text-xs md:text-sm text-gray-700 break-words">
                   <span className="font-semibold">AI Analysis:</span> {elective.reason}
                 </p>

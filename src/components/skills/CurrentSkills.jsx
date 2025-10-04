@@ -36,8 +36,8 @@ const CurrentSkills = () => {
   return (
     <div className="mb-6 md:mb-8">
       {/* Section header */}
-      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-[#003459]">
-        <Target className="text-[#003459] flex-shrink-0" size={18} />
+      <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4 flex items-center gap-2 text-brand-maroon">
+        <Target className="text-brand-maroon flex-shrink-0" size={18} />
         <span className="truncate">Current Skills - Market Performance</span>
       </h3>
       
@@ -70,14 +70,14 @@ const CurrentSkills = () => {
               {/* Market growth stat */}
               <div className="bg-white p-2 rounded border border-gray-200">
                 <div className="text-gray-500 mb-1 truncate">Market Growth</div>
-                <div className="font-bold text-green-600 text-xs md:text-sm">
+                <div className="font-bold text-brand-maroon text-xs md:text-sm">
                   {skill.aiGrowth}
                 </div>
               </div>
               {/* Job postings stat */}
               <div className="bg-white p-2 rounded border border-gray-200">
                 <div className="text-gray-500 mb-1 truncate">Job Postings</div>
-                <div className="font-bold text-[#003459] text-xs md:text-sm">
+                <div className="font-bold text-brand-maroon text-xs md:text-sm">
                   {skill.jobs}
                 </div>
               </div>
