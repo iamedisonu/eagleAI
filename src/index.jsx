@@ -24,10 +24,8 @@ const container = document.getElementById('root');
 const root = createRoot(container);
 
 // Render the app
-console.log('About to render App component...');
 root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
-console.log('App component rendered successfully');
