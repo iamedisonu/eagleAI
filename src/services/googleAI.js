@@ -237,39 +237,97 @@ export const extractTextFromPDF = async (file) => {
  */
 export const analyzeResume = async (text) => {
   try {
-    const prompt = `
-    You are an AI resume reviewer. Here is my resume I want feedback: "${text}"
+        const prompt = `
+            You are an expert resume reviewer with over 10 years of experience helping students across all majors land internships and full-time positions. Evaluate this resume using the universal "What, How, Why" framework and provide actionable, specific feedback tailored to the student's field and career goals.
 
-    Please analyze this resume and provide detailed feedback on the bullet points in the Experience and Projects sections. For each bullet point, provide:
-    - A score from 1 to 10
-    - Detailed feedback on how to improve it
-    - An improved version of the bullet point
+            Resume to review: "${text}"
 
-    Focus your feedback on:
-    - Strong action verbs
-    - Quantified results and metrics
-    - Specific technologies and tools mentioned
-    - Impact and achievements
-    - Conciseness and clarity
+            Please analyze this resume comprehensively using the following 10 categories and provide detailed feedback:
 
-    Return only a JSON object with this structure:
-    {
-      "overallScore": number,
-      "totalBullets": number,
-      "strongBullets": number,
-      "needsImprovement": number,
-      "bullets": [
-        {
-          "id": number,
-          "original": string,
-          "score": number,
-          "feedback": string,
-          "improved": string,
-          "category": "Experience" | "Projects" | "Education" | "Skills"
-        }
-      ]
-    }
-    `;
+            Category 1: Bullet Point Structure (What / How / Why)
+            - WHAT: Each bullet point clearly states the action taken, project completed, or contribution made
+            - HOW: Methods, tools, skills, or approaches used are explicitly mentioned
+            - WHY: Impact is demonstrated through quantifiable or qualitative results
+
+            Category 2: Profile Header & Contact Information
+            - Full name, location, professional phone/email, LinkedIn profile
+            - Professional appearance and accuracy
+
+            Category 3: Education Section
+            - Institution, degree, major, graduation date, GPA
+            - Academic honors, relevant coursework, study abroad
+
+            Category 4: Experience Section (Work, Research, Internships)
+            - Organization, location, position, dates
+            - 2-4 achievement-oriented bullet points per position
+            - Strong action verbs, accomplishments, quantified results
+
+            Category 5: Optional Secondary Sections
+            - Leadership, community service, skills, projects, publications
+            - Relevance and specificity
+
+            Category 6: Visual Appearance & Formatting
+            - Clean, professional layout, consistent formatting
+            - Proper length, margins, font, file format
+
+            Category 7: Language & Grammar
+            - No errors, varied sentence structure, professional tone
+            - Appropriate action verbs and tense consistency
+
+            Category 8: Content Quality & Relevance
+            - Coherent narrative, logical progression, specificity
+            - Transferable skills demonstration
+
+            Category 9: Contextualization & Targeting
+            - Job alignment, industry appropriateness, keyword usage
+
+            Category 10: Critical Universal Standards
+            - Must include: Header, Education, Experience sections
+            - Must avoid: Personal info, references, first-person pronouns
+
+            For each issue identified, provide:
+            - Location: Specific section and bullet point
+            - Current Problem: Describe the issue
+            - Why It Matters: Explain its impact
+            - Specific Fix: Suggest an improved version
+            - Alternative Examples: Tailor examples by field
+
+            Use the 3-Tier Universal Rubric:
+            - Exemplary/Meets Expectations (5 or 3 points)
+            - Acceptable/Partially Meets Expectations (3 or 2 points)  
+            - Not Acceptable/Does Not Meet Expectations (1 point)
+
+            Return a JSON object with this structure:
+            {
+              "overallScore": number,
+              "categoryScores": {
+                "bulletPoints": number,
+                "header": number,
+                "education": number,
+                "experience": number,
+                "secondarySections": number,
+                "formatting": number,
+                "language": number,
+                "contentQuality": number,
+                "targeting": number,
+                "universalStandards": number
+              },
+              "detailedFeedback": [
+                {
+                  "category": string,
+                  "location": string,
+                  "currentProblem": string,
+                  "whyItMatters": string,
+                  "specificFix": string,
+                  "alternativeExamples": string,
+                  "score": number
+                }
+              ],
+              "strengths": [string],
+              "priorityImprovements": [string],
+              "overallAssessment": string
+            }
+            `;
 
     console.log('Sending request to Google AI...');
     const result = await model.generateContent(prompt);
