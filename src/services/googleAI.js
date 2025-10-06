@@ -292,12 +292,12 @@ export const analyzeResume = async (text) => {
             - Must include: Header, Education, Experience sections
             - Must avoid: Personal info, references, first-person pronouns
 
-            For each issue identified, provide:
-            - Location: Specific section and bullet point
-            - Current Problem: Describe the issue
-            - Why It Matters: Explain its impact
-            - Specific Fix: Suggest an improved version
-            - Alternative Examples: Tailor examples by field
+                    For each issue identified, provide this exact structure:
+                    - Location: Specific section and bullet point
+                    - Current Problem: Quote the exact problematic text
+                    - Why It Matters: Explain the specific impact on the resume
+                    - Solution: Explain the general principle for improvement
+                    - Rephrased Example: Show the exact same content rewritten better
 
             Use the 10-Point Scoring System:
             - 9-10: Exceptional/Outstanding
@@ -306,7 +306,14 @@ export const analyzeResume = async (text) => {
             - 3-4: Below Average/Needs Improvement
             - 1-2: Poor/Unacceptable
 
-            IMPORTANT: For any score that is NOT 10/10, you MUST provide specific suggestions on how to improve that particular aspect to reach a perfect score. Include concrete examples and actionable steps.
+                    IMPORTANT: For any score that is NOT 10/10, you MUST provide specific suggestions on how to improve that particular aspect to reach a perfect score. Include concrete examples and actionable steps.
+
+                    FORMATTING: Use markdown formatting in your responses:
+                    - Use **bold** for emphasis on important terms
+                    - Use *italics* for subtle emphasis
+                    - Use bullet points with - for lists
+                    - Use numbered lists with 1. 2. 3. for steps
+                    - Use `code` for specific technical terms or phrases
 
             Return a JSON object with this structure:
             {
@@ -335,17 +342,17 @@ export const analyzeResume = async (text) => {
                 "targeting": string (only if score < 10),
                 "universalStandards": string (only if score < 10)
               },
-              "detailedFeedback": [
-                {
-                  "category": string,
-                  "location": string,
-                  "currentProblem": string,
-                  "whyItMatters": string,
-                  "specificFix": string,
-                  "alternativeExamples": string,
-                  "score": number (1-10)
-                }
-              ],
+                      "detailedFeedback": [
+                        {
+                          "category": string,
+                          "location": string,
+                          "currentProblem": string,
+                          "whyItMatters": string,
+                          "solution": string,
+                          "rephrasedExample": string,
+                          "score": number (1-10)
+                        }
+                      ],
               "strengths": [string],
               "priorityImprovements": [string],
               "overallAssessment": string

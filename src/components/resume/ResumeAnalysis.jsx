@@ -23,6 +23,7 @@ PROPS:
 
 import { useState } from 'react';
 import { FileText, Sparkles, RefreshCw, Download, Copy, CheckCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import ResumeFeedback from './ResumeFeedback';
 
 const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
@@ -89,19 +90,29 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
           {/* Overall Score - Clean and Simple */}
           <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
             <h3 className="text-base font-semibold text-gray-800 mb-3">Overall Resume Score</h3>
-            <div className="text-4xl font-bold text-brand-maroon mb-1">
+            <div className={`text-4xl font-bold mb-1 ${
+              (analysisData.parsedResponse.overallScore || 0) >= 8 ? 'text-brand-maroon' : 
+              (analysisData.parsedResponse.overallScore || 0) >= 6 ? 'text-accent-gold' : 
+              (analysisData.parsedResponse.overallScore || 0) >= 4 ? 'text-accent-coral' : 'text-red-600'
+            }`}>
               {analysisData.parsedResponse.overallScore || 'N/A'}
             </div>
             <div className="text-sm text-gray-600 mb-3">out of 10</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
               <div 
-                className="bg-brand-maroon h-2 rounded-full transition-all duration-500"
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  (analysisData.parsedResponse.overallScore || 0) >= 8 ? 'bg-brand-maroon' : 
+                  (analysisData.parsedResponse.overallScore || 0) >= 6 ? 'bg-accent-gold' : 
+                  (analysisData.parsedResponse.overallScore || 0) >= 4 ? 'bg-accent-coral' : 'bg-red-500'
+                }`}
                 style={{ width: `${((analysisData.parsedResponse.overallScore || 0) / 10) * 100}%` }}
               ></div>
             </div>
-            <p className="text-sm text-gray-700">
-              {analysisData.parsedResponse.overallAssessment || 'Comprehensive analysis completed.'}
-            </p>
+            <div className="text-sm text-gray-700">
+              <ReactMarkdown>
+                {analysisData.parsedResponse.overallAssessment || 'Comprehensive analysis completed.'}
+              </ReactMarkdown>
+            </div>
           </div>
 
           {/* Category Scores - Simplified Grid */}
@@ -132,8 +143,10 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                       ></div>
                     </div>
                     {score < 10 && analysisData.parsedResponse.improvementSuggestions && analysisData.parsedResponse.improvementSuggestions[category] && (
-                      <div className="text-xs text-brand-maroon bg-primary-50 p-1.5 rounded mt-1">
-                        💡 {analysisData.parsedResponse.improvementSuggestions[category]}
+                      <div className="text-xs text-gray-600 bg-gray-100 p-1.5 rounded mt-1">
+                        <ReactMarkdown>
+                          💡 {analysisData.parsedResponse.improvementSuggestions[category]}
+                        </ReactMarkdown>
                       </div>
                     )}
                   </div>
@@ -146,16 +159,18 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Strengths */}
             {analysisData.parsedResponse.strengths && analysisData.parsedResponse.strengths.length > 0 && (
-              <div className="bg-accent-teal-soft rounded-lg p-4 border border-accent-teal">
-                <h3 className="text-base font-semibold text-accent-teal mb-3 flex items-center gap-2">
-                  <CheckCircle className="text-accent-teal" size={16} />
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <CheckCircle className="text-gray-600" size={16} />
                   Strengths
                 </h3>
                 <ul className="space-y-2">
                   {analysisData.parsedResponse.strengths.map((strength, index) => (
-                    <li key={index} className="text-sm text-accent-teal flex items-start gap-2">
-                      <span className="text-accent-teal mt-0.5">✓</span>
-                      <span>{strength}</span>
+                    <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-gray-600 mt-0.5">✓</span>
+                      <div>
+                        <ReactMarkdown>{strength}</ReactMarkdown>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -164,16 +179,18 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
 
             {/* Priority Improvements */}
             {analysisData.parsedResponse.priorityImprovements && analysisData.parsedResponse.priorityImprovements.length > 0 && (
-              <div className="bg-accent-coral/10 rounded-lg p-4 border border-accent-coral/30">
-                <h3 className="text-base font-semibold text-accent-coral mb-3 flex items-center gap-2">
-                  <FileText className="text-accent-coral" size={16} />
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <FileText className="text-gray-600" size={16} />
                   Focus Areas
                 </h3>
                 <ul className="space-y-2">
                   {analysisData.parsedResponse.priorityImprovements.map((improvement, index) => (
-                    <li key={index} className="text-sm text-accent-coral flex items-start gap-2">
-                      <span className="text-accent-coral mt-0.5">•</span>
-                      <span>{improvement}</span>
+                    <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-gray-600 mt-0.5">✓</span>
+                      <div>
+                        <ReactMarkdown>{improvement}</ReactMarkdown>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -205,16 +222,32 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div>
-                      <h5 className="font-medium text-gray-700 mb-1 text-sm">Issue:</h5>
-                      <p className="text-sm text-gray-600">{feedback.currentProblem}</p>
+                      <h5 className="font-medium text-gray-700 mb-1 text-sm">Current Problem:</h5>
+                      <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border-l-4 border-red-200 italic">
+                        "{feedback.currentProblem}"
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h5 className="font-medium text-gray-700 mb-1 text-sm">Why It Matters:</h5>
+                      <div className="text-sm text-gray-600">
+                        <ReactMarkdown>{feedback.whyItMatters}</ReactMarkdown>
+                      </div>
                     </div>
                     
                     <div>
                       <h5 className="font-medium text-gray-700 mb-1 text-sm">Solution:</h5>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        {feedback.specificFix}
+                      <div className="text-sm text-gray-600">
+                        <ReactMarkdown>{feedback.solution}</ReactMarkdown>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h5 className="font-medium text-gray-700 mb-1 text-sm">Rephrased Example:</h5>
+                      <p className="text-sm text-gray-600 bg-green-50 p-2 rounded border-l-4 border-green-200">
+                        "{feedback.rephrasedExample}"
                       </p>
                     </div>
                   </div>

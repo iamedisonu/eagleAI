@@ -133,10 +133,20 @@ const ResumeReview = () => {
                       <AlertCircle size={18} />
                       <span className="font-medium text-sm">{error}</span>
                     </div>
-                  ) : (
+                  ) : isAnalyzing ? (
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="font-medium text-sm">Analyzing...</span>
+                    </div>
+                  ) : analysisData ? (
                     <div className="flex items-center gap-2 text-green-700">
                       <CheckCircle size={18} />
                       <span className="font-medium text-sm">Analysis Complete</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <FileText size={18} />
+                      <span className="font-medium text-sm">Ready for Analysis</span>
                     </div>
                   )}
                 </div>
