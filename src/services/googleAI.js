@@ -31,7 +31,47 @@ const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 /**
- * Extract text from PDF file using multiple parsing methods
+ * Fallback text extraction method for basic PDFs
+ * @param {ArrayBuffer} arrayBuffer - PDF file data
+ * @returns {Promise<string>} - Extracted text content
+ */
+const extractTextFallback = async (arrayBuffer) => {
+  try {
+    // Create a simple text extraction using basic PDF parsing
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+    
+    // Extract text between common PDF text markers
+    const textMatches = text.match(/BT\s+.*?ET/g);
+    if (textMatches && textMatches.length > 0) {
+      let extractedText = '';
+      for (const match of textMatches) {
+        // Extract text between parentheses (common in PDF text objects)
+        const textInParens = match.match(/\(([^)]+)\)/g);
+        if (textInParens) {
+          for (const textMatch of textInParens) {
+            const cleanText = textMatch.replace(/[()]/g, '').trim();
+            if (cleanText.length > 0) {
+              extractedText += cleanText + ' ';
+            }
+          }
+        }
+      }
+      
+      if (extractedText.trim().length > 0) {
+        return extractedText.replace(/\s+/g, ' ').trim();
+      }
+    }
+    
+    return '';
+  } catch (error) {
+    console.warn('Fallback extraction failed:', error.message);
+    return '';
+  }
+};
+
+/**
+ * Extract text from PDF file using pdfjs-dist with enhanced error handling
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
@@ -39,62 +79,110 @@ export const extractTextFromPDF = async (file) => {
   console.log('PDF file received:', file.name, 'Size:', file.size);
   
   try {
-    // Method 1: Try pdf-parse first (more reliable for most PDFs)
-    try {
-      console.log('Attempting PDF parsing with pdf-parse...');
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfParse = (await import('pdf-parse')).default;
-      const data = await pdfParse(arrayBuffer);
-      
-      if (data.text && data.text.trim().length > 0) {
-        console.log('PDF parsing successful with pdf-parse');
-        console.log('Extracted text length:', data.text.length);
-        console.log('First 200 characters:', data.text.substring(0, 200));
-        return data.text.trim();
-      }
-    } catch (pdfParseError) {
-      console.warn('pdf-parse failed, trying pdfjs-dist:', pdfParseError.message);
+    // Validate file
+    if (!file || file.type !== 'application/pdf') {
+      throw new Error('Invalid file type. Please upload a PDF file.');
     }
 
-    // Method 2: Fallback to pdfjs-dist
-    try {
-      console.log('Attempting PDF parsing with pdfjs-dist...');
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      
-      let fullText = '';
-      
-      // Extract text from all pages
-      for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+    if (file.size === 0) {
+      throw new Error('The uploaded file is empty.');
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('File size too large. Please upload a PDF smaller than 10MB.');
+    }
+
+    console.log('Attempting PDF parsing with pdfjs-dist...');
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Configure pdfjs-dist with better options
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useSystemFonts: true,
+      disableFontFace: false,
+      disableRange: false,
+      disableStream: false,
+      cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/standard_fonts/`
+    });
+
+    const pdfDocument = await loadingTask.promise;
+    console.log('PDF loaded successfully. Pages:', pdfDocument.numPages);
+    
+    let fullText = '';
+    let pagesWithText = 0;
+    
+    // Extract text from all pages
+    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+      try {
+        console.log(`Processing page ${pageNum}/${pdfDocument.numPages}...`);
         const page = await pdfDocument.getPage(pageNum);
         const textContent = await page.getTextContent();
+        
+        // Extract text items and clean them up
         const pageText = textContent.items
-          .map(item => item.str)
+          .filter(item => item.str && item.str.trim().length > 0)
+          .map(item => item.str.trim())
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
         
-        if (pageText) {
+        if (pageText && pageText.length > 10) { // Only count pages with substantial text
           fullText += pageText + '\n';
+          pagesWithText++;
+          console.log(`Page ${pageNum} text length:`, pageText.length);
         }
+      } catch (pageError) {
+        console.warn(`Error processing page ${pageNum}:`, pageError.message);
+        // Continue with other pages
+      }
+    }
+    
+    const finalText = fullText.trim();
+    
+    if (finalText.length === 0) {
+      // Try a fallback method for basic text extraction
+      console.log('No text found with standard method, trying fallback...');
+      try {
+        const fallbackText = await extractTextFallback(arrayBuffer);
+        if (fallbackText && fallbackText.trim().length > 0) {
+          console.log('Fallback method successful!');
+          return fallbackText.trim();
+        }
+      } catch (fallbackError) {
+        console.warn('Fallback method also failed:', fallbackError.message);
       }
       
-      if (fullText.trim().length > 0) {
-        console.log('PDF parsing successful with pdfjs-dist');
-        console.log('Extracted text length:', fullText.length);
-        console.log('First 200 characters:', fullText.substring(0, 200));
-        return fullText.trim();
-      }
-    } catch (pdfjsError) {
-      console.warn('pdfjs-dist failed:', pdfjsError.message);
+      throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
     }
-
-    // Method 3: Final fallback - return error
-    throw new Error('All PDF parsing methods failed. The PDF might be corrupted, password-protected, or contain only images.');
+    
+    if (pagesWithText === 0) {
+      throw new Error('No readable text found in any page. The PDF might be image-based or password-protected.');
+    }
+    
+    console.log('PDF parsing successful!');
+    console.log('Pages with text:', pagesWithText);
+    console.log('Total text length:', finalText.length);
+    console.log('First 200 characters:', finalText.substring(0, 200));
+    
+    return finalText;
     
   } catch (error) {
     console.error('PDF processing error:', error);
-    throw new Error('Failed to extract text from PDF: ' + error.message);
+    
+    // Provide more specific error messages
+    if (error.message.includes('Invalid PDF')) {
+      throw new Error('Invalid PDF file. Please ensure the file is a valid PDF document.');
+    } else if (error.message.includes('password')) {
+      throw new Error('Password-protected PDF detected. Please remove the password and try again.');
+    } else if (error.message.includes('network')) {
+      throw new Error('Network error while processing PDF. Please check your internet connection and try again.');
+    } else if (error.message.includes('timeout')) {
+      throw new Error('PDF processing timed out. The file might be too complex. Please try with a simpler PDF.');
+    } else {
+      throw new Error('Failed to extract text from PDF: ' + error.message);
+    }
   }
 };
 
