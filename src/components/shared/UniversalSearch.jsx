@@ -207,7 +207,7 @@ const UniversalSearch = ({ isOpen, onToggle, onClose }) => {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search across all features..."
-                className="flex-1 text-lg outline-none placeholder-gray-400 text-[#811429]"
+                className="w-80 text-lg outline-none placeholder-gray-400 text-[#811429]"
                 autoFocus
               />
               <button
