@@ -42,6 +42,7 @@ const extractTextFromPDFLib = async (arrayBuffer) => {
     console.log('PDF loaded successfully. Pages:', pageCount);
     
     let fullText = '';
+    let pagesWithText = 0;
     
     // Extract text from all pages
     for (let i = 0; i < pageCount; i++) {
@@ -57,6 +58,7 @@ const extractTextFromPDFLib = async (arrayBuffer) => {
           const textContent = await extractTextFromStream(contentStream);
           if (textContent && textContent.trim().length > 0) {
             fullText += textContent + '\n';
+            pagesWithText++;
             console.log(`Page ${i + 1} text length:`, textContent.length);
           }
         }
@@ -66,9 +68,17 @@ const extractTextFromPDFLib = async (arrayBuffer) => {
       }
     }
     
+    console.log(`pdf-lib extraction completed. Pages with text: ${pagesWithText}/${pageCount}`);
     return fullText.trim();
   } catch (error) {
     console.warn('pdf-lib extraction failed:', error.message);
+    console.log('pdf-lib error details:', error);
+    
+    // Check if it's a specific error type
+    if (error.message.includes('password') || error.message.includes('encrypted')) {
+      throw new Error('Password-protected or encrypted PDF detected');
+    }
+    
     return '';
   }
 };
@@ -146,9 +156,12 @@ export const extractTextFromPDF = async (file) => {
         console.log('Total text length:', text.length);
         console.log('First 200 characters:', text.substring(0, 200));
         return text;
+      } else {
+        console.log('pdf-lib returned empty text, trying raw extraction...');
       }
     } catch (pdfLibError) {
       console.warn('pdf-lib extraction failed, trying raw text extraction:', pdfLibError.message);
+      console.log('pdf-lib error details:', pdfLibError);
     }
 
     // Fallback to raw text extraction
@@ -192,16 +205,20 @@ export const extractTextFromPDF = async (file) => {
     console.error('PDF processing error:', error);
     
     // Provide more specific error messages
-    if (error.message.includes('Invalid PDF')) {
+    if (error.message.includes('Invalid PDF') || error.message.includes('invalid PDF')) {
       throw new Error('Invalid PDF file. Please ensure the file is a valid PDF document.');
-    } else if (error.message.includes('password')) {
+    } else if (error.message.includes('password') && (error.message.includes('required') || error.message.includes('protected'))) {
       throw new Error('Password-protected PDF detected. Please remove the password and try again.');
     } else if (error.message.includes('network')) {
       throw new Error('Network error while processing PDF. Please check your internet connection and try again.');
     } else if (error.message.includes('timeout')) {
       throw new Error('PDF processing timed out. The file might be too complex. Please try with a simpler PDF.');
+    } else if (error.message.includes('encrypted') || error.message.includes('Encrypted')) {
+      throw new Error('Encrypted PDF detected. Please remove the encryption and try again.');
     } else {
-      throw new Error('Failed to extract text from PDF: ' + error.message);
+      // For debugging, let's see what the actual error is
+      console.log('Actual error details:', error);
+      throw new Error('Failed to extract text from PDF. Please try with a different PDF file or ensure the file is not corrupted.');
     }
   }
 };
