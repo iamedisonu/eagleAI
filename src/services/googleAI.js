@@ -143,9 +143,28 @@ export const analyzeResume = async (text) => {
     console.log('AI Response received, length:', analysisText.length);
     console.log('Full AI Response:', analysisText);
     
-    // Return the raw response for display
+    // Try to parse the JSON response first
+    try {
+      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsedAnalysis = JSON.parse(jsonMatch[0]);
+        console.log('Parsed JSON analysis:', parsedAnalysis);
+        
+        // Return both parsed and raw response
+        return {
+          rawResponse: analysisText,
+          parsedResponse: parsedAnalysis,
+          timestamp: new Date().toISOString()
+        };
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse JSON response:', parseError);
+    }
+    
+    // If JSON parsing fails, return raw response
     return {
       rawResponse: analysisText,
+      parsedResponse: null,
       timestamp: new Date().toISOString()
     };
   } catch (error) {
