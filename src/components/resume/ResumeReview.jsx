@@ -37,6 +37,7 @@ const ResumeReview = () => {
   const [fetchedText, setFetchedText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
+  const [retryStatus, setRetryStatus] = useState(null);
 
   const handleFileUpload = async (file) => {
     console.log('=== FILE UPLOAD STARTED ===');
@@ -50,6 +51,7 @@ const ResumeReview = () => {
     setUploadedFile(file);
     setIsAnalyzing(true);
     setError(null);
+    setRetryStatus(null);
     setAnalysisData(null); // Clear previous analysis
     
     try {
@@ -67,6 +69,8 @@ const ResumeReview = () => {
       setFetchedText(extractionResult.fetchedText);
       
       console.log('Step 2: Analyzing resume with AI...');
+      setRetryStatus('Connecting to AI service...');
+      
       // Analyze resume with AI using the fetched text
       const analysis = await analyzeResume(extractionResult.fetchedText);
       console.log('Step 2 Complete: AI analysis completed:', analysis);
@@ -93,6 +97,10 @@ const ResumeReview = () => {
         errorMessage = 'Please upload a PDF file only.';
       } else if (error.message.includes('File size')) {
         errorMessage = 'File size too large. Please upload a smaller PDF.';
+      } else if (error.message.includes('503') || error.message.includes('overloaded')) {
+        errorMessage = 'AI service is currently overloaded. We\'re automatically retrying with different models. Please wait a moment and try again.';
+      } else if (error.message.includes('All models and retry attempts failed')) {
+        errorMessage = 'AI service is temporarily unavailable. All retry attempts have been exhausted. Please try again in a few minutes.';
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message.includes('API')) {
@@ -139,6 +147,7 @@ const ResumeReview = () => {
       setAnalysisData(fallbackAnalysis);
     } finally {
       setIsAnalyzing(false);
+      setRetryStatus(null);
     }
   };
 
@@ -149,6 +158,7 @@ const ResumeReview = () => {
     setFetchedText(null);
     setIsAnalyzing(false);
     setError(null);
+    setRetryStatus(null);
   };
 
   return (
@@ -225,7 +235,10 @@ const ResumeReview = () => {
               {isAnalyzing ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-maroon mx-auto mb-4"></div>
-                  <p className="text-gray-600">Analyzing your resume...</p>
+                  <p className="text-gray-600 mb-2">Analyzing your resume...</p>
+                  {retryStatus && (
+                    <p className="text-sm text-gray-500">{retryStatus}</p>
+                  )}
                 </div>
               ) : analysisData ? (
                 <ResumeAnalysis 

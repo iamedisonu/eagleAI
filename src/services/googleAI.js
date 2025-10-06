@@ -12,9 +12,20 @@ FEATURES:
   - Scoring system (1-10 scale)
   - Actionable improvement suggestions
   - Structured feedback format
+  - Automatic retry logic with exponential backoff
+  - Multiple model fallback (gemini-2.5-flash, gemini-1.5-flash, gemini-1.5-pro)
+  - Enhanced error handling for API overload (503) and rate limiting
+
+RETRY LOGIC:
+  - Automatically retries failed API calls up to 3 times per model
+  - Uses exponential backoff (1s, 2s, 4s delays)
+  - Falls back to alternative models if primary model fails
+  - Handles 503 (overloaded), 429 (rate limit), and network errors
+  - Provides detailed console logging for debugging
 
 USAGE:
   Import and use analyzeResume() function with PDF file and API key.
+  The service will automatically handle retries and model fallbacks.
 ============================================================================
 */
 
@@ -25,7 +36,71 @@ const PDF_CO_API_KEY = 'edison.u@eagles.oc.edu_FMWTRzjRcLn3n5uCuuUVUqJMbjJ1mJUSh
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(GOOGLE_AI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000, // 1 second
+  maxDelay: 10000, // 10 seconds
+  backoffMultiplier: 2
+};
+
+// Available models in order of preference
+const MODELS = [
+  'gemini-2.5-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro'
+];
+
+/**
+ * Sleep utility for delays
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise<void>}
+ */
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Calculate delay for exponential backoff
+ * @param {number} attempt - Current attempt number (0-based)
+ * @returns {number} - Delay in milliseconds
+ */
+const calculateDelay = (attempt) => {
+  const delay = RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt);
+  return Math.min(delay, RETRY_CONFIG.maxDelay);
+};
+
+/**
+ * Check if error is retryable
+ * @param {Error} error - The error to check
+ * @returns {boolean} - Whether the error is retryable
+ */
+const isRetryableError = (error) => {
+  const retryableErrors = [
+    '503', // Service Unavailable
+    '429', // Too Many Requests
+    '500', // Internal Server Error
+    '502', // Bad Gateway
+    '504', // Gateway Timeout
+    'overloaded',
+    'rate limit',
+    'timeout',
+    'network',
+    'fetch'
+  ];
+  
+  const errorMessage = error.message?.toLowerCase() || '';
+  return retryableErrors.some(retryableError => errorMessage.includes(retryableError));
+};
+
+/**
+ * Get model with fallback
+ * @param {number} modelIndex - Index of model to try
+ * @returns {Object} - Google AI model instance
+ */
+const getModel = (modelIndex = 0) => {
+  const modelName = MODELS[modelIndex] || MODELS[0];
+  return genAI.getGenerativeModel({ model: modelName });
+};
 
 /**
  * Upload file to PDF.co temporary storage
@@ -231,6 +306,59 @@ export const extractTextFromPDF = async (file) => {
 };
 
 /**
+ * Retry wrapper for Google AI API calls
+ * @param {Function} apiCall - The API call function to retry
+ * @param {string} operation - Description of the operation for logging
+ * @returns {Promise<any>} - The API call result
+ */
+const retryApiCall = async (apiCall, operation = 'API call') => {
+  let lastError;
+  const startTime = Date.now();
+  
+  for (let modelIndex = 0; modelIndex < MODELS.length; modelIndex++) {
+    const model = getModel(modelIndex);
+    console.log(`🔄 Trying ${operation} with model: ${MODELS[modelIndex]}`);
+    
+    for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+      try {
+        const result = await apiCall(model);
+        const duration = Date.now() - startTime;
+        console.log(`✅ ${operation} successful with model: ${MODELS[modelIndex]} (${duration}ms)`);
+        return result;
+      } catch (error) {
+        lastError = error;
+        const isRetryable = isRetryableError(error);
+        const retryInfo = isRetryable ? `(retryable)` : `(not retryable)`;
+        
+        console.warn(`❌ ${operation} attempt ${attempt + 1} failed with model ${MODELS[modelIndex]} ${retryInfo}:`, error.message);
+        
+        // If this is the last attempt for this model, try the next model
+        if (attempt === RETRY_CONFIG.maxRetries) {
+          console.log(`🔄 All retry attempts exhausted for model ${MODELS[modelIndex]}, trying next model...`);
+          break;
+        }
+        
+        // If error is not retryable, don't retry
+        if (!isRetryable) {
+          console.log('🚫 Error is not retryable, failing immediately');
+          throw error;
+        }
+        
+        // Calculate delay and wait before retry
+        const delay = calculateDelay(attempt);
+        console.log(`⏳ Waiting ${delay}ms before retry attempt ${attempt + 2}...`);
+        await sleep(delay);
+      }
+    }
+  }
+  
+  // If we get here, all models and retries failed
+  const totalDuration = Date.now() - startTime;
+  console.error(`💥 All models and retry attempts failed for ${operation} after ${totalDuration}ms`);
+  throw new Error(`All models and retry attempts failed for ${operation}. Last error: ${lastError?.message || 'Unknown error'}`);
+};
+
+/**
  * Analyze resume text and extract bullet points
  * @param {string} text - Resume text content
  * @returns {Promise<Object>} - Analysis results with bullet points and scores
@@ -367,24 +495,24 @@ Return a JSON object with this structure:
 CRITICAL: You must return ONLY valid JSON. Do not include any text before or after the JSON object.
 `;
 
-    console.log('Sending request to Google AI...');
-    console.log('Using model: gemini-2.5-flash');
+    console.log('Sending request to Google AI with retry logic...');
     console.log('Prompt length:', prompt.length);
     
-    const result = await model.generateContent(prompt);
-    console.log('Got result from Google AI');
+    // Use retry wrapper for the API call
+    const result = await retryApiCall(async (model) => {
+      console.log(`Attempting analysis with model: ${model.model}`);
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    }, 'resume analysis');
     
-    const response = await result.response;
-    console.log('Got response from Google AI');
-    
-    const analysisText = response.text();
-    console.log('AI Response received, length:', analysisText.length);
-    console.log('First 500 characters of response:', analysisText.substring(0, 500));
+    console.log('AI Response received, length:', result.length);
+    console.log('First 500 characters of response:', result.substring(0, 500));
     
     // Try to parse the JSON response
     try {
       // Clean the response text - remove any markdown formatting or extra text
-      let cleanText = analysisText.trim();
+      let cleanText = result.trim();
       
       // Remove markdown code blocks if present
       if (cleanText.startsWith('```json')) {
@@ -407,7 +535,7 @@ CRITICAL: You must return ONLY valid JSON. Do not include any text before or aft
         if (parsedAnalysis.overallScore !== undefined && parsedAnalysis.categoryScores) {
           console.log('Valid analysis structure found');
           return {
-            rawResponse: analysisText,
+            rawResponse: result,
             parsedResponse: parsedAnalysis,
             timestamp: new Date().toISOString()
           };
@@ -421,7 +549,7 @@ CRITICAL: You must return ONLY valid JSON. Do not include any text before or aft
       }
     } catch (parseError) {
       console.error('Failed to parse JSON response:', parseError);
-      console.error('Response that failed to parse:', analysisText.substring(0, 1000));
+      console.error('Response that failed to parse:', result.substring(0, 1000));
     }
     
     // If JSON parsing fails, create a fallback structure
@@ -458,7 +586,7 @@ CRITICAL: You must return ONLY valid JSON. Do not include any text before or aft
     console.log('Created fallback analysis structure');
     
     return {
-      rawResponse: analysisText,
+      rawResponse: result,
       parsedResponse: fallbackAnalysis,
       timestamp: new Date().toISOString()
     };
@@ -527,9 +655,12 @@ export const extractJobContext = async (text, bulletText) => {
     Return only the JSON object.
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const contextText = response.text();
+    // Use retry wrapper for the API call
+    const contextText = await retryApiCall(async (model) => {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    }, 'job context extraction');
     
     const jsonMatch = contextText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
