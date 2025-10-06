@@ -19,7 +19,7 @@ USAGE:
 */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as pdfjsLib from 'pdfjs-dist';
+import { PDFDocument } from 'pdf-lib';
 
 const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
 
@@ -27,51 +27,94 @@ const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
 /**
- * Fallback text extraction method for basic PDFs
+ * Extract text from PDF using pdf-lib and raw text extraction
  * @param {ArrayBuffer} arrayBuffer - PDF file data
  * @returns {Promise<string>} - Extracted text content
  */
-const extractTextFallback = async (arrayBuffer) => {
+const extractTextFromPDFLib = async (arrayBuffer) => {
   try {
-    // Create a simple text extraction using basic PDF parsing
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+    console.log('Attempting PDF parsing with pdf-lib...');
     
-    // Extract text between common PDF text markers
-    const textMatches = text.match(/BT\s+.*?ET/g);
-    if (textMatches && textMatches.length > 0) {
-      let extractedText = '';
-      for (const match of textMatches) {
-        // Extract text between parentheses (common in PDF text objects)
-        const textInParens = match.match(/\(([^)]+)\)/g);
-        if (textInParens) {
-          for (const textMatch of textInParens) {
-            const cleanText = textMatch.replace(/[()]/g, '').trim();
-            if (cleanText.length > 0) {
-              extractedText += cleanText + ' ';
-            }
+    // Load PDF document
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    const pageCount = pdfDoc.getPageCount();
+    console.log('PDF loaded successfully. Pages:', pageCount);
+    
+    let fullText = '';
+    
+    // Extract text from all pages
+    for (let i = 0; i < pageCount; i++) {
+      try {
+        const page = pdfDoc.getPage(i);
+        const { width, height } = page.getSize();
+        console.log(`Processing page ${i + 1}/${pageCount} (${width}x${height})`);
+        
+        // Get page content stream
+        const contentStream = page.node.get('Contents');
+        if (contentStream) {
+          // Extract text from content stream
+          const textContent = await extractTextFromStream(contentStream);
+          if (textContent && textContent.trim().length > 0) {
+            fullText += textContent + '\n';
+            console.log(`Page ${i + 1} text length:`, textContent.length);
           }
         }
-      }
-      
-      if (extractedText.trim().length > 0) {
-        return extractedText.replace(/\s+/g, ' ').trim();
+      } catch (pageError) {
+        console.warn(`Error processing page ${i + 1}:`, pageError.message);
+        // Continue with other pages
       }
     }
     
-    return '';
+    return fullText.trim();
   } catch (error) {
-    console.warn('Fallback extraction failed:', error.message);
+    console.warn('pdf-lib extraction failed:', error.message);
     return '';
   }
 };
 
 /**
- * Extract text from PDF file using pdfjs-dist with enhanced error handling
+ * Extract text from PDF content stream
+ * @param {Object} contentStream - PDF content stream
+ * @returns {Promise<string>} - Extracted text content
+ */
+const extractTextFromStream = async (contentStream) => {
+  try {
+    // Get the stream data
+    const streamData = contentStream.get('stream') || contentStream;
+    let text = '';
+    
+    if (streamData && streamData.bytes) {
+      // Decode the stream data
+      const decoded = new TextDecoder('utf-8', { fatal: false }).decode(streamData.bytes);
+      
+      // Extract text between BT and ET markers (PDF text objects)
+      const textMatches = decoded.match(/BT\s+.*?ET/gs);
+      if (textMatches) {
+        for (const match of textMatches) {
+          // Extract text between parentheses
+          const textInParens = match.match(/\(([^)]+)\)/g);
+          if (textInParens) {
+            for (const textMatch of textInParens) {
+              const cleanText = textMatch.replace(/[()]/g, '').trim();
+              if (cleanText.length > 0) {
+                text += cleanText + ' ';
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return text.replace(/\s+/g, ' ').trim();
+  } catch (error) {
+    console.warn('Stream extraction failed:', error.message);
+    return '';
+  }
+};
+
+/**
+ * Extract text from PDF file using pdf-lib with enhanced error handling
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
@@ -92,81 +135,58 @@ export const extractTextFromPDF = async (file) => {
       throw new Error('File size too large. Please upload a PDF smaller than 10MB.');
     }
 
-    console.log('Attempting PDF parsing with pdfjs-dist...');
+    console.log('Attempting PDF parsing with pdf-lib...');
     const arrayBuffer = await file.arrayBuffer();
     
-    // Configure pdfjs-dist with better options
-    const loadingTask = pdfjsLib.getDocument({
-      data: arrayBuffer,
-      useSystemFonts: true,
-      disableFontFace: false,
-      disableRange: false,
-      disableStream: false,
-      cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
-      cMapPacked: true,
-      standardFontDataUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/standard_fonts/`
-    });
+    // Try pdf-lib extraction first
+    try {
+      const text = await extractTextFromPDFLib(arrayBuffer);
+      if (text && text.trim().length > 0) {
+        console.log('PDF parsing successful with pdf-lib!');
+        console.log('Total text length:', text.length);
+        console.log('First 200 characters:', text.substring(0, 200));
+        return text;
+      }
+    } catch (pdfLibError) {
+      console.warn('pdf-lib extraction failed, trying raw text extraction:', pdfLibError.message);
+    }
 
-    const pdfDocument = await loadingTask.promise;
-    console.log('PDF loaded successfully. Pages:', pdfDocument.numPages);
-    
-    let fullText = '';
-    let pagesWithText = 0;
-    
-    // Extract text from all pages
-    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
-      try {
-        console.log(`Processing page ${pageNum}/${pdfDocument.numPages}...`);
-        const page = await pdfDocument.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        // Extract text items and clean them up
-        const pageText = textContent.items
-          .filter(item => item.str && item.str.trim().length > 0)
-          .map(item => item.str.trim())
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        if (pageText && pageText.length > 10) { // Only count pages with substantial text
-          fullText += pageText + '\n';
-          pagesWithText++;
-          console.log(`Page ${pageNum} text length:`, pageText.length);
-        }
-      } catch (pageError) {
-        console.warn(`Error processing page ${pageNum}:`, pageError.message);
-        // Continue with other pages
-      }
-    }
-    
-    const finalText = fullText.trim();
-    
-    if (finalText.length === 0) {
-      // Try a fallback method for basic text extraction
-      console.log('No text found with standard method, trying fallback...');
-      try {
-        const fallbackText = await extractTextFallback(arrayBuffer);
-        if (fallbackText && fallbackText.trim().length > 0) {
-          console.log('Fallback method successful!');
-          return fallbackText.trim();
-        }
-      } catch (fallbackError) {
-        console.warn('Fallback method also failed:', fallbackError.message);
-      }
+    // Fallback to raw text extraction
+    try {
+      console.log('Attempting raw text extraction...');
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const rawText = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
       
-      throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
+      // Extract text between common PDF text markers
+      const textMatches = rawText.match(/BT\s+.*?ET/gs);
+      if (textMatches && textMatches.length > 0) {
+        let extractedText = '';
+        for (const match of textMatches) {
+          // Extract text between parentheses (common in PDF text objects)
+          const textInParens = match.match(/\(([^)]+)\)/g);
+          if (textInParens) {
+            for (const textMatch of textInParens) {
+              const cleanText = textMatch.replace(/[()]/g, '').trim();
+              if (cleanText.length > 0) {
+                extractedText += cleanText + ' ';
+              }
+            }
+          }
+        }
+        
+        if (extractedText.trim().length > 0) {
+          const finalText = extractedText.replace(/\s+/g, ' ').trim();
+          console.log('Raw text extraction successful!');
+          console.log('Total text length:', finalText.length);
+          console.log('First 200 characters:', finalText.substring(0, 200));
+          return finalText;
+        }
+      }
+    } catch (rawError) {
+      console.warn('Raw text extraction failed:', rawError.message);
     }
     
-    if (pagesWithText === 0) {
-      throw new Error('No readable text found in any page. The PDF might be image-based or password-protected.');
-    }
-    
-    console.log('PDF parsing successful!');
-    console.log('Pages with text:', pagesWithText);
-    console.log('Total text length:', finalText.length);
-    console.log('First 200 characters:', finalText.substring(0, 200));
-    
-    return finalText;
+    throw new Error('No text content found in the PDF. The PDF might contain only images, be corrupted, or password-protected.');
     
   } catch (error) {
     console.error('PDF processing error:', error);
