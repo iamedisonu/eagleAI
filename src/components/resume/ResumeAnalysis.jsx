@@ -228,38 +228,6 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
             </div>
           )}
 
-          {/* Raw Response Toggle */}
-          <details className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <summary className="cursor-pointer font-medium text-gray-700 mb-2">
-              View Raw AI Response
-            </summary>
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-gray-600">Raw Response</h4>
-                <button
-                  onClick={() => handleCopy(analysisData.rawResponse, 'raw')}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors duration-200"
-                >
-                  {copiedIndex === 'raw' ? (
-                    <>
-                      <CheckCircle size={12} />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={12} />
-                      Copy
-                    </>
-                  )}
-                </button>
-              </div>
-              <div className="bg-white rounded p-3 border border-gray-200 max-h-64 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-xs text-gray-700 font-mono leading-relaxed">
-                  {analysisData.rawResponse}
-                </pre>
-              </div>
-            </div>
-          </details>
         </div>
       ) : (
         /* Fallback to Raw Response Display */
