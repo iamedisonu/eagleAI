@@ -27,7 +27,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 /**
- * Extract text from PDF file using react-pdf
+ * Extract text from PDF file using pdfjs-dist
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
@@ -37,11 +37,10 @@ export const extractTextFromPDF = async (file) => {
       console.log('PDF file received:', file.name, 'Size:', file.size);
       
       // Dynamic import to avoid build issues
-      const pdfjsLib = await import('react-pdf');
+      const pdfjsLib = await import('pdfjs-dist');
       
-      // react-pdf exports pdfjsLib as default
-      const pdfjs = pdfjsLib.default || pdfjsLib;
-      const getDocument = pdfjs.getDocument;
+      // Set up worker
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
       
       const reader = new FileReader();
       
@@ -49,11 +48,8 @@ export const extractTextFromPDF = async (file) => {
         try {
           const arrayBuffer = e.target.result;
           
-          // Convert ArrayBuffer to Uint8Array for react-pdf
-          const uint8Array = new Uint8Array(arrayBuffer);
-          
           // Load PDF document
-          const pdf = await getDocument({ data: uint8Array }).promise;
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
           let fullText = '';
           
           console.log('PDF loaded, pages:', pdf.numPages);
@@ -102,43 +98,37 @@ export const extractTextFromPDF = async (file) => {
 export const analyzeResume = async (text) => {
   try {
     const prompt = `
-    Analyze this resume text and extract all bullet points from experience and project sections. 
-    For each bullet point, provide:
-    1. The original bullet point text
-    2. A score from 1-10 (10 being excellent)
-    3. Detailed feedback explaining the score
-    4. An improved version of the bullet point
-    5. The category (Experience or Projects)
+    You are an AI resume reviewer. Here is my resume I want feedback: "${text}"
 
-    Resume text:
-    ${text}
+    Please analyze this resume and provide detailed feedback on the bullet points in the Experience and Projects sections. For each bullet point, provide:
+    - A score from 1 to 10
+    - Detailed feedback on how to improve it
+    - An improved version of the bullet point
 
-    Please respond with a JSON object in this exact format:
+    Focus your feedback on:
+    - Strong action verbs
+    - Quantified results and metrics
+    - Specific technologies and tools mentioned
+    - Impact and achievements
+    - Conciseness and clarity
+
+    Return only a JSON object with this structure:
     {
-      "overallScore": 7.5,
-      "totalBullets": 5,
-      "strongBullets": 3,
-      "needsImprovement": 2,
+      "overallScore": number,
+      "totalBullets": number,
+      "strongBullets": number,
+      "needsImprovement": number,
       "bullets": [
         {
-          "id": 1,
-          "original": "Original bullet point text",
-          "score": 8,
-          "feedback": "Detailed feedback explaining strengths and weaknesses",
-          "improved": "Improved version with better action verbs and quantified results",
-          "category": "Experience"
+          "id": number,
+          "original": string,
+          "score": number,
+          "feedback": string,
+          "improved": string,
+          "category": "Experience" | "Projects" | "Education" | "Skills"
         }
       ]
     }
-
-    Focus on:
-    - Action verbs (led, developed, created, implemented, etc.)
-    - Quantified results (numbers, percentages, timeframes)
-    - Specific technologies and tools
-    - Clear impact and value
-    - Conciseness and clarity
-
-    Return only the JSON object, no additional text.
     `;
 
     console.log('Sending request to Google AI...');
