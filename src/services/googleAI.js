@@ -240,6 +240,13 @@ export const analyzeResume = async (text) => {
         const prompt = `
             You are an expert resume reviewer with over 10 years of experience helping students across all majors land internships and full-time positions. Evaluate this resume using the universal "What, How, Why" framework and provide actionable, specific feedback tailored to the student's field and career goals.
 
+            IMPORTANT: Today's date is ${new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}. Use this date to provide accurate feedback about graduation dates, experience timelines, and current industry standards.
+
             Resume to review: "${text}"
 
             Please analyze this resume comprehensively using the following 10 categories and provide detailed feedback:
@@ -299,6 +306,8 @@ export const analyzeResume = async (text) => {
             - 3-4: Below Average/Needs Improvement
             - 1-2: Poor/Unacceptable
 
+            IMPORTANT: For any score that is NOT 10/10, you MUST provide specific suggestions on how to improve that particular aspect to reach a perfect score. Include concrete examples and actionable steps.
+
             Return a JSON object with this structure:
             {
               "overallScore": number (1-10),
@@ -313,6 +322,18 @@ export const analyzeResume = async (text) => {
                 "contentQuality": number (1-10),
                 "targeting": number (1-10),
                 "universalStandards": number (1-10)
+              },
+              "improvementSuggestions": {
+                "bulletPoints": string (only if score < 10),
+                "header": string (only if score < 10),
+                "education": string (only if score < 10),
+                "experience": string (only if score < 10),
+                "secondarySections": string (only if score < 10),
+                "formatting": string (only if score < 10),
+                "language": string (only if score < 10),
+                "contentQuality": string (only if score < 10),
+                "targeting": string (only if score < 10),
+                "universalStandards": string (only if score < 10)
               },
               "detailedFeedback": [
                 {

@@ -118,10 +118,10 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                     }`}>
                       {score}
                     </div>
-                    <div className="text-xs text-gray-600 capitalize">
+                    <div className="text-xs text-gray-600 capitalize mb-2">
                       {category.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                       <div 
                         className={`h-2 rounded-full ${
                           score >= 8 ? 'bg-green-500' : 
@@ -131,6 +131,11 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                         style={{ width: `${(score / 10) * 100}%` }}
                       ></div>
                     </div>
+                    {score < 10 && analysisData.parsedResponse.improvementSuggestions && analysisData.parsedResponse.improvementSuggestions[category] && (
+                      <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-2">
+                        💡 {analysisData.parsedResponse.improvementSuggestions[category]}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
