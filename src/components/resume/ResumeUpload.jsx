@@ -74,6 +74,7 @@ const ResumeUpload = ({ onFileUpload }) => {
     setUploadedFileName(file.name);
     setUploadedFile(file);
     console.log('File ready for upload:', file.name);
+    console.log('Uploaded file state:', file);
   };
 
   const openFileDialog = () => {
@@ -129,7 +130,10 @@ const ResumeUpload = ({ onFileUpload }) => {
       {uploadedFileName && uploadedFile && (
         <div className="mt-6 text-center">
           <button
-            onClick={() => onFileUpload(uploadedFile)}
+            onClick={() => {
+              console.log('Get Feedback clicked, file:', uploadedFile);
+              onFileUpload(uploadedFile);
+            }}
             className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200"
           >
             Get Feedback
