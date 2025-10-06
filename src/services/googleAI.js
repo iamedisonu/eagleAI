@@ -292,25 +292,27 @@ export const analyzeResume = async (text) => {
             - Specific Fix: Suggest an improved version
             - Alternative Examples: Tailor examples by field
 
-            Use the 3-Tier Universal Rubric:
-            - Exemplary/Meets Expectations (5 or 3 points)
-            - Acceptable/Partially Meets Expectations (3 or 2 points)  
-            - Not Acceptable/Does Not Meet Expectations (1 point)
+            Use the 10-Point Scoring System:
+            - 9-10: Exceptional/Outstanding
+            - 7-8: Good/Above Average
+            - 5-6: Average/Acceptable
+            - 3-4: Below Average/Needs Improvement
+            - 1-2: Poor/Unacceptable
 
             Return a JSON object with this structure:
             {
-              "overallScore": number,
+              "overallScore": number (1-10),
               "categoryScores": {
-                "bulletPoints": number,
-                "header": number,
-                "education": number,
-                "experience": number,
-                "secondarySections": number,
-                "formatting": number,
-                "language": number,
-                "contentQuality": number,
-                "targeting": number,
-                "universalStandards": number
+                "bulletPoints": number (1-10),
+                "header": number (1-10),
+                "education": number (1-10),
+                "experience": number (1-10),
+                "secondarySections": number (1-10),
+                "formatting": number (1-10),
+                "language": number (1-10),
+                "contentQuality": number (1-10),
+                "targeting": number (1-10),
+                "universalStandards": number (1-10)
               },
               "detailedFeedback": [
                 {
@@ -320,7 +322,7 @@ export const analyzeResume = async (text) => {
                   "whyItMatters": string,
                   "specificFix": string,
                   "alternativeExamples": string,
-                  "score": number
+                  "score": number (1-10)
                 }
               ],
               "strengths": [string],

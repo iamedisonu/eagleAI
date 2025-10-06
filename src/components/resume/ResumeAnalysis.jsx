@@ -83,43 +83,53 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
         </p>
       </div>
 
-      {/* Comprehensive Resume Analysis */}
+      {/* Clean Resume Analysis */}
       {analysisData.parsedResponse ? (
         <div className="space-y-6">
-          {/* Overall Assessment */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-            <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
-              <Sparkles className="text-blue-600" size={24} />
-              Overall Assessment
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {analysisData.parsedResponse.overallScore || 'N/A'}/10
-                </div>
-                <p className="text-sm text-blue-700 font-medium">Overall Score</p>
-              </div>
-              <div className="text-sm text-gray-700">
-                {analysisData.parsedResponse.overallAssessment || 'Comprehensive analysis completed.'}
-              </div>
+          {/* Overall Score - Clean and Simple */}
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm text-center">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Overall Resume Score</h3>
+            <div className="text-6xl font-bold text-blue-600 mb-2">
+              {analysisData.parsedResponse.overallScore || 'N/A'}
             </div>
+            <div className="text-sm text-gray-600 mb-4">out of 10</div>
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+              <div 
+                className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${((analysisData.parsedResponse.overallScore || 0) / 10) * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-700">
+              {analysisData.parsedResponse.overallAssessment || 'Comprehensive analysis completed.'}
+            </p>
           </div>
 
-          {/* Category Scores */}
+          {/* Category Scores - Simplified Grid */}
           {analysisData.parsedResponse.categoryScores && (
             <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Scores</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Category Breakdown</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {Object.entries(analysisData.parsedResponse.categoryScores).map(([category, score]) => (
-                  <div key={category} className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className={`text-2xl font-bold ${
-                      score >= 4 ? 'text-green-600' : 
-                      score >= 3 ? 'text-yellow-600' : 'text-red-600'
+                  <div key={category} className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className={`text-3xl font-bold mb-2 ${
+                      score >= 8 ? 'text-green-600' : 
+                      score >= 6 ? 'text-yellow-600' : 
+                      score >= 4 ? 'text-orange-600' : 'text-red-600'
                     }`}>
-                      {score}/5
+                      {score}
                     </div>
-                    <div className="text-xs text-gray-600 capitalize mt-1">
+                    <div className="text-xs text-gray-600 capitalize">
                       {category.replace(/([A-Z])/g, ' $1').trim()}
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div 
+                        className={`h-2 rounded-full ${
+                          score >= 8 ? 'bg-green-500' : 
+                          score >= 6 ? 'bg-yellow-500' : 
+                          score >= 4 ? 'bg-orange-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${(score / 10) * 100}%` }}
+                      ></div>
                     </div>
                   </div>
                 ))}
@@ -127,100 +137,89 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
             </div>
           )}
 
-          {/* Strengths */}
-          {analysisData.parsedResponse.strengths && analysisData.parsedResponse.strengths.length > 0 && (
-            <div className="bg-green-50 rounded-lg p-6 border border-green-200">
-              <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
-                <CheckCircle className="text-green-600" size={20} />
-                Strengths
-              </h3>
-              <ul className="space-y-2">
-                {analysisData.parsedResponse.strengths.map((strength, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-green-700">
-                    <span className="text-green-500 mt-1">•</span>
-                    <span>{strength}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Key Insights - Clean Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Strengths */}
+            {analysisData.parsedResponse.strengths && analysisData.parsedResponse.strengths.length > 0 && (
+              <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+                <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
+                  <CheckCircle className="text-green-600" size={20} />
+                  Strengths
+                </h3>
+                <ul className="space-y-3">
+                  {analysisData.parsedResponse.strengths.map((strength, index) => (
+                    <li key={index} className="text-sm text-green-700 flex items-start gap-2">
+                      <span className="text-green-500 mt-1">✓</span>
+                      <span>{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          {/* Priority Improvements */}
-          {analysisData.parsedResponse.priorityImprovements && analysisData.parsedResponse.priorityImprovements.length > 0 && (
-            <div className="bg-yellow-50 rounded-lg p-6 border border-yellow-200">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-4 flex items-center gap-2">
-                <FileText className="text-yellow-600" size={20} />
-                Priority Improvements
-              </h3>
-              <ul className="space-y-2">
-                {analysisData.parsedResponse.priorityImprovements.map((improvement, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-yellow-700">
-                    <span className="text-yellow-500 mt-1">•</span>
-                    <span>{improvement}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {/* Priority Improvements */}
+            {analysisData.parsedResponse.priorityImprovements && analysisData.parsedResponse.priorityImprovements.length > 0 && (
+              <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
+                <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center gap-2">
+                  <FileText className="text-orange-600" size={20} />
+                  Focus Areas
+                </h3>
+                <ul className="space-y-3">
+                  {analysisData.parsedResponse.priorityImprovements.map((improvement, index) => (
+                    <li key={index} className="text-sm text-orange-700 flex items-start gap-2">
+                      <span className="text-orange-500 mt-1">•</span>
+                      <span>{improvement}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
-          {/* Detailed Feedback */}
+          {/* Detailed Feedback - Simplified */}
           {analysisData.parsedResponse.detailedFeedback && analysisData.parsedResponse.detailedFeedback.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800">Detailed Feedback</h3>
-              {analysisData.parsedResponse.detailedFeedback.map((feedback, index) => (
-                <div key={index} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                  <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 text-center">Detailed Feedback</h3>
+              {analysisData.parsedResponse.detailedFeedback.slice(0, 5).map((feedback, index) => (
+                <div key={index} className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-gray-800 capitalize">
-                          {feedback.category}
-                        </h4>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                          {feedback.location}
-                        </span>
-                      </div>
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold text-white ${
-                        feedback.score >= 4 ? 'bg-green-500' : 
-                        feedback.score >= 3 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}>
-                        {feedback.score}/5
-                      </div>
+                      <h4 className="font-semibold text-gray-800 capitalize mb-1">
+                        {feedback.category}
+                      </h4>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        {feedback.location}
+                      </span>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-bold text-white ${
+                      feedback.score >= 8 ? 'bg-green-500' : 
+                      feedback.score >= 6 ? 'bg-yellow-500' : 
+                      feedback.score >= 4 ? 'bg-orange-500' : 'bg-red-500'
+                    }`}>
+                      {feedback.score}/10
                     </div>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <h5 className="font-medium text-red-700 mb-2">Current Problem:</h5>
-                      <p className="text-sm text-gray-700 bg-red-50 p-3 rounded border-l-4 border-red-200">
-                        {feedback.currentProblem}
-                      </p>
+                      <h5 className="font-medium text-gray-700 mb-1">Issue:</h5>
+                      <p className="text-sm text-gray-600">{feedback.currentProblem}</p>
                     </div>
                     
                     <div>
-                      <h5 className="font-medium text-orange-700 mb-2">Why It Matters:</h5>
-                      <p className="text-sm text-gray-700 bg-orange-50 p-3 rounded border-l-4 border-orange-200">
-                        {feedback.whyItMatters}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h5 className="font-medium text-green-700 mb-2">Specific Fix:</h5>
-                      <p className="text-sm text-gray-700 bg-green-50 p-3 rounded border-l-4 border-green-200">
+                      <h5 className="font-medium text-gray-700 mb-1">Solution:</h5>
+                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
                         {feedback.specificFix}
                       </p>
                     </div>
-                    
-                    {feedback.alternativeExamples && (
-                      <div>
-                        <h5 className="font-medium text-blue-700 mb-2">Alternative Examples:</h5>
-                        <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded border-l-4 border-blue-200">
-                          {feedback.alternativeExamples}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
+              {analysisData.parsedResponse.detailedFeedback.length > 5 && (
+                <p className="text-center text-sm text-gray-500">
+                  ... and {analysisData.parsedResponse.detailedFeedback.length - 5} more feedback items
+                </p>
+              )}
             </div>
           )}
 
