@@ -27,40 +27,69 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 /**
- * Extract text from PDF file using a simpler approach
+ * Extract text from PDF file - Simple approach for now
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
 export const extractTextFromPDF = async (file) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // For now, let's create a mock text extraction for testing
-      // This will allow the upload to work while we fix the PDF parsing
       console.log('PDF file received:', file.name, 'Size:', file.size);
       
-      // Simulate text extraction with a delay
-      setTimeout(() => {
-        const mockText = `
+      // For now, we'll use a mock text extraction to get the upload working
+      // This allows users to test the AI analysis while we work on PDF parsing
+      console.log('Using mock text extraction for testing...');
+      
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock resume text for testing
+      const mockText = `
         John Doe
         Software Engineer
+        john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe
         
         EXPERIENCE
-        Software Engineer at Tech Company (2022-2024)
-        • Developed web applications using React and Node.js
-        • Led a team of 5 developers to deliver mobile app
-        • Implemented database optimization techniques
+        
+        Senior Software Engineer | Tech Company Inc. | Jan 2022 - Present
+        • Developed scalable web applications using React and Node.js, serving 10,000+ daily active users
+        • Led a cross-functional team of 5 developers to deliver a mobile app in 6 months
+        • Implemented database optimization techniques, reducing query response time by 65%
+        • Collaborated with product managers to define technical requirements and project timelines
+        
+        Software Engineer | StartupXYZ | Jun 2020 - Dec 2021
+        • Built full-stack applications using Python, Django, and PostgreSQL
+        • Created RESTful APIs that handled 1M+ requests per day
+        • Improved application performance by 40% through code optimization
+        • Participated in agile development processes and code reviews
         
         PROJECTS
-        E-commerce Platform (2023)
-        • Built full-stack application serving 1000+ users
-        • Reduced page load time by 40%
-        • Integrated payment processing system
-        `;
         
-        resolve(mockText.trim());
-      }, 1000);
+        E-commerce Platform | Personal Project | 2023
+        • Developed a complete e-commerce solution using React, Node.js, and MongoDB
+        • Integrated payment processing with Stripe API
+        • Implemented real-time inventory management system
+        • Deployed on AWS with CI/CD pipeline using GitHub Actions
+        
+        Task Management App | Team Project | 2022
+        • Created a collaborative task management tool using Vue.js and Express
+        • Implemented real-time updates using WebSocket connections
+        • Added user authentication and role-based access control
+        • Achieved 95% test coverage with Jest and Cypress
+        
+        SKILLS
+        Programming Languages: JavaScript, Python, Java, TypeScript
+        Frontend: React, Vue.js, HTML5, CSS3, Tailwind CSS
+        Backend: Node.js, Express, Django, Flask, RESTful APIs
+        Databases: PostgreSQL, MongoDB, Redis, MySQL
+        Tools: Git, Docker, AWS, Jenkins, Jira
+        `;
+      
+      console.log('Mock text extraction complete, length:', mockText.length);
+      resolve(mockText.trim());
       
     } catch (error) {
+      console.error('PDF processing error:', error);
       reject(new Error('Failed to process PDF file: ' + error.message));
     }
   });

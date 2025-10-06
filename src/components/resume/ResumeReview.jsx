@@ -37,28 +37,36 @@ const ResumeReview = () => {
   const [error, setError] = useState(null);
 
   const handleFileUpload = async (file) => {
-    console.log('Starting file upload process for:', file.name);
+    console.log('=== FILE UPLOAD STARTED ===');
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified
+    });
+    
     setUploadedFile(file);
     setIsAnalyzing(true);
     setError(null);
     
     try {
-      console.log('Extracting text from PDF...');
+      console.log('Step 1: Extracting text from PDF...');
       // Extract text from PDF
       const text = await extractTextFromPDF(file);
-      console.log('Extracted text length:', text.length);
+      console.log('Step 1 Complete: Extracted text length:', text.length);
+      console.log('First 200 characters:', text.substring(0, 200));
       
       if (!text || text.trim().length === 0) {
         throw new Error('No text found in PDF. Please ensure the PDF contains selectable text.');
       }
       
-      console.log('Analyzing resume with AI...');
+      console.log('Step 2: Analyzing resume with AI...');
       // Analyze resume with AI
       const analysis = await analyzeResume(text);
-      console.log('AI analysis completed:', analysis);
+      console.log('Step 2 Complete: AI analysis completed:', analysis);
       
       // Enhance bullets with job context
-      console.log('Enhancing bullets with job context...');
+      console.log('Step 3: Enhancing bullets with job context...');
       const enhancedBullets = await Promise.all(
         analysis.bullets.map(async (bullet, index) => {
           try {
@@ -81,14 +89,15 @@ const ResumeReview = () => {
         })
       );
       
-      console.log('Setting analysis data...');
+      console.log('Step 4: Setting analysis data...');
       setAnalysisData({
         ...analysis,
         bullets: enhancedBullets
       });
-      console.log('Analysis complete!');
+      console.log('=== FILE UPLOAD COMPLETE ===');
     } catch (error) {
-      console.error('Error analyzing resume:', error);
+      console.error('=== FILE UPLOAD ERROR ===');
+      console.error('Error details:', error);
       setError(error.message || 'Failed to analyze resume. Please try again.');
     } finally {
       setIsAnalyzing(false);
