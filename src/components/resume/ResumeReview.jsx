@@ -123,8 +123,8 @@ const ResumeReview = () => {
                       This does not serve as a complete resume review, so you should still seek feedback from peers. 
                       Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
                       <br /><br />
-                      <strong>Note:</strong> Due to technical limitations, the PDF text extraction is currently using sample data. 
-                      For real PDF parsing, consider using a PDF parsing service or implementing a more robust solution.
+                      <strong>Note:</strong> The tool now uses real PDF text extraction to analyze your actual resume content. 
+                      Upload your PDF resume to get personalized AI feedback based on your specific experience and projects.
                     </p>
             
             {!uploadedFile ? (

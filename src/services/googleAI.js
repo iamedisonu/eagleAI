@@ -27,87 +27,39 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 /**
- * Extract text from PDF file using a simple approach
+ * Extract text from PDF file using pdf-parse
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
 export const extractTextFromPDF = async (file) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       console.log('PDF file received:', file.name, 'Size:', file.size);
       
-      // For now, we'll use a simple approach that works
-      // In a real implementation, you might want to use a PDF parsing service
-      // or implement a more sophisticated solution
+      // Dynamic import to avoid build issues
+      const pdf = await import('pdf-parse');
       
       const reader = new FileReader();
       
       reader.onload = async (e) => {
         try {
-          // Convert PDF to text using a simple method
-          // This is a placeholder - in production you'd want proper PDF parsing
           const arrayBuffer = e.target.result;
           
-          // For demonstration, we'll create a mock text extraction
-          // In a real app, you'd use a proper PDF parsing library or service
-          const mockText = `
-John Doe
-Software Engineer
-john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe
-
-EXPERIENCE
-
-Senior Software Engineer | Tech Company Inc. | 2020-2023
-• Led development of microservices architecture serving 1M+ users
-• Implemented CI/CD pipelines reducing deployment time by 60%
-• Mentored 5 junior developers and conducted code reviews
-• Optimized database queries improving response time by 40%
-
-Software Developer | StartupXYZ | 2018-2020
-• Built full-stack web applications using React and Node.js
-• Collaborated with design team to implement responsive UI components
-• Integrated third-party APIs and payment processing systems
-• Participated in agile development process and sprint planning
-
-PROJECTS
-
-E-Commerce Platform | 2022
-• Developed a scalable e-commerce platform using React and Express
-• Implemented user authentication, payment processing, and inventory management
-• Deployed on AWS with Docker containers and automated testing
-
-Task Management App | 2021
-• Created a collaborative task management application
-• Features include real-time updates, file sharing, and team collaboration
-• Built with React, Node.js, and WebSocket for real-time communication
-
-SKILLS
-
-Programming Languages: JavaScript, Python, Java, TypeScript
-Frameworks: React, Node.js, Express, Django, Spring Boot
-Databases: PostgreSQL, MongoDB, Redis
-Cloud & DevOps: AWS, Docker, Kubernetes, Jenkins
-Tools: Git, Jira, Figma, VS Code
-
-EDUCATION
-
-Bachelor of Science in Computer Science
-University of Technology | 2014-2018
-GPA: 3.8/4.0
-
-CERTIFICATIONS
-
-AWS Certified Solutions Architect
-Google Cloud Professional Developer
-Certified Kubernetes Administrator
-          `;
+          // Parse PDF using pdf-parse
+          const data = await pdf.default(arrayBuffer);
+          const extractedText = data.text;
           
-          console.log('Mock text extraction completed, length:', mockText.length);
-          console.log('First 200 characters:', mockText.substring(0, 200));
+          console.log('PDF parsing completed successfully');
+          console.log('Extracted text length:', extractedText.length);
+          console.log('First 200 characters:', extractedText.substring(0, 200));
           
-          resolve(mockText.trim());
+          if (!extractedText || extractedText.trim().length === 0) {
+            throw new Error('No text found in PDF. The PDF might be image-based or corrupted.');
+          }
+          
+          resolve(extractedText.trim());
         } catch (error) {
-          console.error('Text extraction error:', error);
+          console.error('PDF parsing error:', error);
           reject(new Error('Failed to extract text from PDF: ' + error.message));
         }
       };
