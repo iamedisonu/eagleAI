@@ -57,6 +57,8 @@ const ResumeUpload = ({ onFileUpload }) => {
   const handleFile = (file) => {
     setError('');
     
+    console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
+    
     // Validate file type
     if (file.type !== 'application/pdf') {
       setError('Please upload a PDF file only.');
@@ -71,6 +73,7 @@ const ResumeUpload = ({ onFileUpload }) => {
     
     setUploadedFileName(file.name);
     setUploadedFile(file);
+    console.log('File ready for upload:', file.name);
   };
 
   const openFileDialog = () => {

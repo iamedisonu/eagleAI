@@ -35,14 +35,33 @@ export const extractTextFromPDF = async (file) => {
   return new Promise(async (resolve, reject) => {
     try {
       // Dynamic import to avoid build issues
-      const pdf = await import('pdf-parse');
+      const pdfjsLib = await import('pdfjs-dist');
+      
+      // Set up worker - try CDN first, fallback to local
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      } catch (e) {
+        // Fallback to local worker if CDN fails
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).toString();
+      }
+      
       const reader = new FileReader();
       
       reader.onload = async (e) => {
         try {
           const data = e.target.result;
-          const pdfData = await pdf.default(data);
-          resolve(pdfData.text);
+          const pdf = await pdfjsLib.getDocument({ data }).promise;
+          let fullText = '';
+          
+          // Extract text from all pages
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n';
+          }
+          
+          resolve(fullText.trim());
         } catch (error) {
           reject(new Error('Failed to extract text from PDF: ' + error.message));
         }

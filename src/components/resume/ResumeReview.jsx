@@ -37,22 +37,28 @@ const ResumeReview = () => {
   const [error, setError] = useState(null);
 
   const handleFileUpload = async (file) => {
+    console.log('Starting file upload process for:', file.name);
     setUploadedFile(file);
     setIsAnalyzing(true);
     setError(null);
     
     try {
+      console.log('Extracting text from PDF...');
       // Extract text from PDF
       const text = await extractTextFromPDF(file);
+      console.log('Extracted text length:', text.length);
       
       if (!text || text.trim().length === 0) {
         throw new Error('No text found in PDF. Please ensure the PDF contains selectable text.');
       }
       
+      console.log('Analyzing resume with AI...');
       // Analyze resume with AI
       const analysis = await analyzeResume(text);
+      console.log('AI analysis completed:', analysis);
       
       // Enhance bullets with job context
+      console.log('Enhancing bullets with job context...');
       const enhancedBullets = await Promise.all(
         analysis.bullets.map(async (bullet, index) => {
           try {
@@ -75,10 +81,12 @@ const ResumeReview = () => {
         })
       );
       
+      console.log('Setting analysis data...');
       setAnalysisData({
         ...analysis,
         bullets: enhancedBullets
       });
+      console.log('Analysis complete!');
     } catch (error) {
       console.error('Error analyzing resume:', error);
       setError(error.message || 'Failed to analyze resume. Please try again.');
