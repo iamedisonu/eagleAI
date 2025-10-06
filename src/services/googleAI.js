@@ -37,7 +37,7 @@ export const extractTextFromPDF = async (file) => {
       console.log('PDF file received:', file.name, 'Size:', file.size);
       
       // Dynamic import to avoid build issues
-      const pdfjsLib = await import('react-pdf');
+      const { getDocument } = await import('react-pdf');
       
       const reader = new FileReader();
       
@@ -49,7 +49,7 @@ export const extractTextFromPDF = async (file) => {
           const uint8Array = new Uint8Array(arrayBuffer);
           
           // Load PDF document
-          const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+          const pdf = await getDocument({ data: uint8Array }).promise;
           let fullText = '';
           
           console.log('PDF loaded, pages:', pdf.numPages);
