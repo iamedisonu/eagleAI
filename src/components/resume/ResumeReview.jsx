@@ -34,6 +34,7 @@ const ResumeReview = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analysisData, setAnalysisData] = useState(null);
   const [extractedText, setExtractedText] = useState(null);
+  const [fetchedText, setFetchedText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -53,20 +54,20 @@ const ResumeReview = () => {
     try {
       console.log('Step 1: Extracting text from PDF...');
       // Extract text from PDF
-      const text = await extractTextFromPDF(file);
-      console.log('Step 1 Complete: Extracted text length:', text.length);
-      console.log('First 200 characters:', text.substring(0, 200));
+      const extractionResult = await extractTextFromPDF(file);
+      console.log('Step 1 Complete: Extraction result:', extractionResult);
       
-      if (!text || text.trim().length === 0) {
+      if (!extractionResult || !extractionResult.fetchedText || extractionResult.fetchedText.trim().length === 0) {
         throw new Error('No text found in PDF. Please ensure the PDF contains selectable text.');
       }
       
       // Store extracted text for display
-      setExtractedText(text);
+      setExtractedText(extractionResult.originalText);
+      setFetchedText(extractionResult.fetchedText);
       
       console.log('Step 2: Analyzing resume with AI...');
-      // Analyze resume with AI
-      const analysis = await analyzeResume(text);
+      // Analyze resume with AI using the fetched text
+      const analysis = await analyzeResume(extractionResult.fetchedText);
       console.log('Step 2 Complete: AI analysis completed:', analysis);
       
       console.log('Step 3: Setting analysis data...');
@@ -85,6 +86,7 @@ const ResumeReview = () => {
     setUploadedFile(null);
     setAnalysisData(null);
     setExtractedText(null);
+    setFetchedText(null);
     setIsAnalyzing(false);
     setError(null);
   };
@@ -115,6 +117,33 @@ const ResumeReview = () => {
             </div>
             <p className="text-xs text-gray-500 mt-2">
               Text length: {extractedText.length} characters
+            </p>
+          </div>
+        )}
+
+        {/* Fetched Text Display - Full Width */}
+        {fetchedText && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <FileText size={24} className="text-green-600" />
+                Parsed Text from PDF 2 (Fetched Content)
+              </h2>
+              <button
+                onClick={() => navigator.clipboard.writeText(fetchedText)}
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm"
+              >
+                <Copy size={16} />
+                Copy Text
+              </button>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto border border-gray-200">
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                {fetchedText}
+              </pre>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Text length: {fetchedText.length} characters
             </p>
           </div>
         )}

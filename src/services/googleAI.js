@@ -118,13 +118,30 @@ const extractTextFromPDFCo = async (file) => {
     
     // PDF.co returns text in different possible fields
     let extractedText = '';
+    let textUrl = null;
+    
     if (result.body) {
       extractedText = result.body;
     } else if (result.text) {
       extractedText = result.text;
     } else if (result.url) {
-      // If result contains a URL, we might need to fetch the text content
-      extractedText = result.url;
+      // If result contains a URL, we need to fetch the text content
+      textUrl = result.url;
+      console.log('PDF.co returned URL, fetching text content from:', textUrl);
+      
+      try {
+        const textResponse = await fetch(textUrl);
+        if (textResponse.ok) {
+          extractedText = await textResponse.text();
+          console.log('Successfully fetched text from URL');
+        } else {
+          throw new Error(`Failed to fetch text from URL: ${textResponse.status}`);
+        }
+      } catch (urlError) {
+        console.warn('Failed to fetch text from URL:', urlError.message);
+        // Fallback to using the URL as text
+        extractedText = textUrl;
+      }
     }
     
     if (extractedText && extractedText.trim().length > 0) {
@@ -132,7 +149,13 @@ const extractTextFromPDFCo = async (file) => {
       console.log('PDF.co extraction successful!');
       console.log('Total text length:', finalText.length);
       console.log('First 200 characters:', finalText.substring(0, 200));
-      return finalText;
+      
+      // Return both the original response and fetched text
+      return {
+        originalText: textUrl || finalText,
+        fetchedText: finalText,
+        isUrl: !!textUrl
+      };
     } else {
       throw new Error('No text content extracted from PDF');
     }
@@ -169,13 +192,13 @@ export const extractTextFromPDF = async (file) => {
     console.log('Attempting PDF parsing with PDF.co API...');
     
     // Use PDF.co API for text extraction
-    const extractedText = await extractTextFromPDFCo(file);
+    const extractionResult = await extractTextFromPDFCo(file);
     
-    if (extractedText && extractedText.trim().length > 0) {
+    if (extractionResult && extractionResult.fetchedText && extractionResult.fetchedText.trim().length > 0) {
       console.log('PDF parsing successful with PDF.co!');
-      console.log('Total text length:', extractedText.length);
-      console.log('First 200 characters:', extractedText.substring(0, 200));
-      return extractedText;
+      console.log('Total text length:', extractionResult.fetchedText.length);
+      console.log('First 200 characters:', extractionResult.fetchedText.substring(0, 200));
+      return extractionResult;
     } else {
       throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
     }
