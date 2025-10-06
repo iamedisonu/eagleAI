@@ -141,22 +141,13 @@ export const analyzeResume = async (text) => {
     const analysisText = response.text();
     
     console.log('AI Response received, length:', analysisText.length);
-    console.log('AI Response preview:', analysisText.substring(0, 300) + '...');
+    console.log('Full AI Response:', analysisText);
     
-    // Clean the response to extract JSON
-    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to parse AI response as JSON');
-    }
-    
-    const analysis = JSON.parse(jsonMatch[0]);
-    
-    // Validate the response structure
-    if (!analysis.bullets || !Array.isArray(analysis.bullets)) {
-      throw new Error('Invalid analysis structure received');
-    }
-    
-    return analysis;
+    // Return the raw response for display
+    return {
+      rawResponse: analysisText,
+      timestamp: new Date().toISOString()
+    };
   } catch (error) {
     console.error('Error analyzing resume:', error);
     throw new Error('Failed to analyze resume: ' + error.message);

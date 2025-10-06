@@ -73,24 +73,41 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
 
   return (
     <div className="space-y-6">
-      {/* Experiences Header */}
+      {/* Raw AI Response Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Experiences ({analysisData.bullets.length})</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Raw AI Response</h2>
+        <p className="text-sm text-gray-600">
+          Generated at: {new Date(analysisData.timestamp).toLocaleString()}
+        </p>
       </div>
 
-      {/* Bullet Point Analysis */}
-      <div className="space-y-6">
-        {analysisData.bullets.map((bullet, index) => (
-          <ResumeFeedback
-            key={bullet.id}
-            bullet={bullet}
-            index={index}
-            onCopy={handleCopy}
-            copiedIndex={copiedIndex}
-            getScoreColor={getScoreColor}
-            getScoreBgColor={getScoreBgColor}
-          />
-        ))}
+      {/* Raw Response Display */}
+      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Google AI Response</h3>
+          <button
+            onClick={() => handleCopy(analysisData.rawResponse, 'raw')}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            {copiedIndex === 'raw' ? (
+              <>
+                <CheckCircle size={16} />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={16} />
+                Copy Response
+              </>
+            )}
+          </button>
+        </div>
+        
+        <div className="bg-white rounded-lg p-4 border border-gray-200 max-h-96 overflow-y-auto">
+          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+            {analysisData.rawResponse}
+          </pre>
+        </div>
       </div>
     </div>
   );
