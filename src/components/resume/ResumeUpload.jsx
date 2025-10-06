@@ -112,7 +112,7 @@ const ResumeUpload = ({ onFileUpload }) => {
           </p>
           
           <p className="text-gray-500 text-sm">
-            PDF (Max Size: 1 MB)
+            PDF (Max Size: 5 MB)
           </p>
         </div>
       </div>
