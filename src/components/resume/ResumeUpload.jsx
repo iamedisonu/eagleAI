@@ -19,7 +19,7 @@ PROPS:
 */
 
 import { useState, useRef } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 const ResumeUpload = ({ onFileUpload }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -81,6 +81,15 @@ const ResumeUpload = ({ onFileUpload }) => {
     fileInputRef.current?.click();
   };
 
+  const removeFile = () => {
+    setUploadedFileName('');
+    setUploadedFile(null);
+    setError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Upload area */}
@@ -117,6 +126,33 @@ const ResumeUpload = ({ onFileUpload }) => {
           </p>
         </div>
       </div>
+
+      {/* File Preview */}
+      {uploadedFileName && uploadedFile && (
+        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-green-100 p-2 rounded-lg">
+              <FileText className="text-green-600" size={24} />
+            </div>
+            <div className="flex-1">
+              <p className="text-green-800 font-medium">{uploadedFileName}</p>
+              <p className="text-green-600 text-sm">
+                {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="text-green-600" size={20} />
+              <button
+                onClick={removeFile}
+                className="p-1 rounded-full hover:bg-green-200 transition-colors duration-200"
+                title="Remove file"
+              >
+                <X className="text-green-600" size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error message */}
       {error && (
