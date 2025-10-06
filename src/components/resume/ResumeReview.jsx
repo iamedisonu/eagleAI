@@ -37,32 +37,32 @@ const ResumeReview = () => {
   // Mock analysis data for demonstration
   const mockAnalysisData = {
     overallScore: 7.2,
-    totalBullets: 12,
-    strongBullets: 8,
-    needsImprovement: 4,
+    totalBullets: 3,
+    strongBullets: 2,
+    needsImprovement: 1,
     bullets: [
       {
         id: 1,
-        original: "Worked on web development projects using React and Node.js",
-        score: 4,
-        feedback: "Too generic and lacks specific impact. Missing quantified results and technical depth.",
-        improved: "Developed 3 full-stack web applications using React and Node.js, serving 500+ daily active users and reducing page load time by 40%",
+        original: "Developed a Python script to automate the generation of report cards, reducing manual time from days to seconds.",
+        score: 10,
+        feedback: "This is a strong bullet point with a clear action verb, specific technology, and quantified impact. The time reduction from 'days to seconds' is impressive and shows significant value. This is nearly perfect as written.",
+        improved: "Developed a Python script to automate the generation of report cards, reducing manual time from days to seconds.",
         category: "Experience"
       },
       {
         id: 2,
-        original: "Led a team of 5 developers to deliver a mobile app",
-        score: 8,
-        feedback: "Good leadership mention and team size. Could benefit from specific timeline and technical details.",
-        improved: "Led a cross-functional team of 5 developers to deliver a React Native mobile app in 6 months, resulting in 10K+ downloads and 4.8-star rating",
+        original: "Developed a WhatsApp learning chatbot using GPT-4 API and Manychat, improving content delivery for 198 students and reducing grading time by 85% through automatic feedback.",
+        score: 10,
+        feedback: "Excellent bullet point! It has a strong action verb, specific technologies (GPT-4 API, Manychat), clear beneficiaries (198 students), and quantified impact (85% reduction). This demonstrates both technical skills and measurable business value.",
+        improved: "Developed a WhatsApp learning chatbot using GPT-4 API and Manychat, improving content delivery for 198 students and reducing grading time by 85% through automatic feedback.",
         category: "Experience"
       },
       {
         id: 3,
-        original: "Implemented database optimization techniques",
-        score: 3,
-        feedback: "Vague and lacks context. What techniques? What was the impact?",
-        improved: "Optimized PostgreSQL database queries using indexing and query optimization, reducing average response time from 2.3s to 0.8s and improving system performance by 65%",
+        original: "Worked on various software development projects",
+        score: 4,
+        feedback: "This bullet point is too vague and generic. It lacks specific technologies, quantifiable results, and doesn't demonstrate the impact of your work. Consider adding specific projects, technologies used, and measurable outcomes.",
+        improved: "Developed 3 full-stack web applications using React and Node.js, serving 500+ daily active users and reducing page load time by 40%",
         category: "Projects"
       }
     ]
@@ -86,49 +86,65 @@ const ResumeReview = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-brand-white rounded-lg md:rounded-xl p-6 shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="bg-brand-maroon p-3 rounded-xl shadow-md">
-            <FileText className="text-brand-white" size={28} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-brand-maroon">AI Resume Review</h2>
-            <p className="text-gray-600 mt-1">
-              Get instant, AI-powered feedback on your resume bullet points
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+          {/* Left Column - Resume Review */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Resume Review</h1>
+            <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+              Currently, the resume review tool will only give feedback on your bullet points for experiences and projects. 
+              This does not serve as a complete resume review, so you should still seek feedback from peers. 
+              Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
             </p>
+            
+            {!uploadedFile ? (
+              <ResumeUpload onFileUpload={handleFileUpload} />
+            ) : (
+              <div className="text-center py-8">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-center gap-2 text-green-700">
+                    <CheckCircle size={20} />
+                    <span className="font-medium">File uploaded successfully</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleNewUpload}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  Upload a different file
+                </button>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Features list */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <CheckCircle className="text-accent-teal" size={16} />
-            <span>Bullet point scoring (1-10)</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <CheckCircle className="text-accent-teal" size={16} />
-            <span>Actionable improvement suggestions</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <CheckCircle className="text-accent-teal" size={16} />
-            <span>Quantified impact recommendations</span>
+          {/* Right Column - Feedback */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Feedback</h1>
+            
+            {!uploadedFile ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <FileText size={48} className="mx-auto" />
+                </div>
+                <p className="text-gray-500">Upload your resume to see feedback</p>
+              </div>
+            ) : isAnalyzing ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Analyzing your resume...</p>
+              </div>
+            ) : analysisData ? (
+              <ResumeAnalysis 
+                file={uploadedFile}
+                analysisData={analysisData}
+                isAnalyzing={isAnalyzing}
+                onNewUpload={handleNewUpload}
+              />
+            ) : null}
           </div>
         </div>
       </div>
-
-      {/* Main content */}
-      {!uploadedFile ? (
-        <ResumeUpload onFileUpload={handleFileUpload} />
-      ) : (
-        <ResumeAnalysis 
-          file={uploadedFile}
-          analysisData={analysisData}
-          isAnalyzing={isAnalyzing}
-          onNewUpload={handleNewUpload}
-        />
-      )}
     </div>
   );
 };
