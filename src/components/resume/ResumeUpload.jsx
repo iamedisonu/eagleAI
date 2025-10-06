@@ -141,24 +141,6 @@ const ResumeUpload = ({ onFileUpload }) => {
         </div>
       )}
 
-      {/* Test Buttons for Demo */}
-      <div className="mt-4 text-center space-y-2">
-        <button
-          onClick={() => {
-            console.log('Test button clicked - using mock file');
-            // Create a mock file for testing
-            const mockFile = new File(['test'], 'test-resume.pdf', { type: 'application/pdf' });
-            onFileUpload(mockFile);
-          }}
-          className="text-blue-600 hover:text-blue-800 text-sm underline block mx-auto"
-        >
-          Test with Sample Resume (Demo)
-        </button>
-        
-        <div className="text-xs text-gray-500">
-          Or upload any PDF file to test with your own resume
-        </div>
-      </div>
     </div>
   );
 };
