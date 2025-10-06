@@ -118,11 +118,14 @@ const ResumeReview = () => {
           {/* Left Column - Resume Review */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Resume Review</h1>
-            <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-              Currently, the resume review tool will only give feedback on your bullet points for experiences and projects. 
-              This does not serve as a complete resume review, so you should still seek feedback from peers. 
-              Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
-            </p>
+                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                      Currently, the resume review tool will only give feedback on your bullet points for experiences and projects. 
+                      This does not serve as a complete resume review, so you should still seek feedback from peers. 
+                      Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
+                      <br /><br />
+                      <strong>Note:</strong> Due to technical limitations, the PDF text extraction is currently using sample data. 
+                      For real PDF parsing, consider using a PDF parsing service or implementing a more robust solution.
+                    </p>
             
             {!uploadedFile ? (
               <ResumeUpload onFileUpload={handleFileUpload} />
