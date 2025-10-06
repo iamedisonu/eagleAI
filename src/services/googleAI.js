@@ -19,7 +19,7 @@ USAGE:
 */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
 
 const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
 
@@ -27,107 +27,71 @@ const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
 /**
- * Extract text from PDF using pdf-lib and raw text extraction
+ * Extract text from PDF using pdfjs-dist
  * @param {ArrayBuffer} arrayBuffer - PDF file data
  * @returns {Promise<string>} - Extracted text content
  */
-const extractTextFromPDFLib = async (arrayBuffer) => {
+const extractTextFromPDFJS = async (arrayBuffer) => {
   try {
-    console.log('Attempting PDF parsing with pdf-lib...');
+    console.log('Attempting PDF parsing with pdfjs-dist...');
     
     // Load PDF document
-    const pdfDoc = await PDFDocument.load(arrayBuffer);
-    const pageCount = pdfDoc.getPageCount();
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useSystemFonts: true,
+      disableFontFace: false,
+      disableRange: false,
+      disableStream: false
+    });
+
+    const pdfDocument = await loadingTask.promise;
+    const pageCount = pdfDocument.numPages;
     console.log('PDF loaded successfully. Pages:', pageCount);
     
     let fullText = '';
     let pagesWithText = 0;
     
     // Extract text from all pages
-    for (let i = 0; i < pageCount; i++) {
+    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
       try {
-        const page = pdfDoc.getPage(i);
-        const { width, height } = page.getSize();
-        console.log(`Processing page ${i + 1}/${pageCount} (${width}x${height})`);
+        console.log(`Processing page ${pageNum}/${pageCount}...`);
+        const page = await pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent();
         
-        // Get page content stream
-        const contentStream = page.node.get('Contents');
-        if (contentStream) {
-          // Extract text from content stream
-          const textContent = await extractTextFromStream(contentStream);
-          if (textContent && textContent.trim().length > 0) {
-            fullText += textContent + '\n';
-            pagesWithText++;
-            console.log(`Page ${i + 1} text length:`, textContent.length);
-          }
+        // Extract text items and clean them up
+        const pageText = textContent.items
+          .filter(item => item.str && item.str.trim().length > 0)
+          .map(item => item.str.trim())
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (pageText && pageText.length > 10) { // Only count pages with substantial text
+          fullText += pageText + '\n';
+          pagesWithText++;
+          console.log(`Page ${pageNum} text length:`, pageText.length);
         }
       } catch (pageError) {
-        console.warn(`Error processing page ${i + 1}:`, pageError.message);
+        console.warn(`Error processing page ${pageNum}:`, pageError.message);
         // Continue with other pages
       }
     }
     
-    console.log(`pdf-lib extraction completed. Pages with text: ${pagesWithText}/${pageCount}`);
+    console.log(`pdfjs-dist extraction completed. Pages with text: ${pagesWithText}/${pageCount}`);
     return fullText.trim();
   } catch (error) {
-    console.warn('pdf-lib extraction failed:', error.message);
-    console.log('pdf-lib error details:', error);
-    
-    // Check if it's a specific error type - be more precise
-    if (error.message.includes('password required') || 
-        error.message.includes('encrypted') || 
-        error.message.includes('password-protected') ||
-        error.message.includes('authentication required')) {
-      throw new Error('Password-protected or encrypted PDF detected');
-    }
-    
+    console.warn('pdfjs-dist extraction failed:', error.message);
+    console.log('pdfjs-dist error details:', error);
     return '';
   }
 };
 
 /**
- * Extract text from PDF content stream
- * @param {Object} contentStream - PDF content stream
- * @returns {Promise<string>} - Extracted text content
- */
-const extractTextFromStream = async (contentStream) => {
-  try {
-    // Get the stream data
-    const streamData = contentStream.get('stream') || contentStream;
-    let text = '';
-    
-    if (streamData && streamData.bytes) {
-      // Decode the stream data
-      const decoded = new TextDecoder('utf-8', { fatal: false }).decode(streamData.bytes);
-      
-      // Extract text between BT and ET markers (PDF text objects)
-      const textMatches = decoded.match(/BT\s+.*?ET/gs);
-      if (textMatches) {
-        for (const match of textMatches) {
-          // Extract text between parentheses
-          const textInParens = match.match(/\(([^)]+)\)/g);
-          if (textInParens) {
-            for (const textMatch of textInParens) {
-              const cleanText = textMatch.replace(/[()]/g, '').trim();
-              if (cleanText.length > 0) {
-                text += cleanText + ' ';
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    return text.replace(/\s+/g, ' ').trim();
-  } catch (error) {
-    console.warn('Stream extraction failed:', error.message);
-    return '';
-  }
-};
-
-/**
- * Extract text from PDF file using pdf-lib with enhanced error handling
+ * Extract text from PDF file using pdfjs-dist with enhanced error handling
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
@@ -148,31 +112,23 @@ export const extractTextFromPDF = async (file) => {
       throw new Error('File size too large. Please upload a PDF smaller than 10MB.');
     }
 
-    console.log('Attempting PDF parsing with pdf-lib...');
+    console.log('Attempting PDF parsing with pdfjs-dist...');
     const arrayBuffer = await file.arrayBuffer();
     
-    // Try pdf-lib extraction first
+    // Try pdfjs-dist extraction
     try {
-      const text = await extractTextFromPDFLib(arrayBuffer);
+      const text = await extractTextFromPDFJS(arrayBuffer);
       if (text && text.trim().length > 0) {
-        console.log('PDF parsing successful with pdf-lib!');
+        console.log('PDF parsing successful with pdfjs-dist!');
         console.log('Total text length:', text.length);
         console.log('First 200 characters:', text.substring(0, 200));
         return text;
       } else {
-        console.log('pdf-lib returned empty text, trying raw extraction...');
+        console.log('pdfjs-dist returned empty text, trying raw extraction...');
       }
-    } catch (pdfLibError) {
-      console.warn('pdf-lib extraction failed, trying raw text extraction:', pdfLibError.message);
-      console.log('pdf-lib error details:', pdfLibError);
-      
-      // Check if this is actually a password error
-      if (pdfLibError.message.includes('password required') || 
-          pdfLibError.message.includes('password-protected') || 
-          pdfLibError.message.includes('authentication required') ||
-          pdfLibError.message.includes('encrypted PDF')) {
-        throw new Error('Password-protected PDF detected. Please remove the password and try again.');
-      }
+    } catch (pdfJSError) {
+      console.warn('pdfjs-dist extraction failed, trying raw text extraction:', pdfJSError.message);
+      console.log('pdfjs-dist error details:', pdfJSError);
     }
 
     // Fallback to raw text extraction
@@ -210,7 +166,7 @@ export const extractTextFromPDF = async (file) => {
       console.warn('Raw text extraction failed:', rawError.message);
     }
     
-    throw new Error('No text content found in the PDF. The PDF might contain only images, be corrupted, or password-protected.');
+    throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
     
   } catch (error) {
     console.error('PDF processing error:', error);
