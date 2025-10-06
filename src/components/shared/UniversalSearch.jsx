@@ -181,10 +181,11 @@ const UniversalSearch = ({ isOpen, onToggle, onClose }) => {
       {/* Search Button */}
       <button
         onClick={onToggle}
-        className="flex items-center gap-2 px-4 py-2 bg-brand-white/10 text-brand-white rounded-lg hover:bg-brand-white/20 transition-colors duration-200"
+        className="flex items-center gap-2 px-3 py-2 bg-brand-white/10 text-brand-white rounded-lg hover:bg-brand-white/20 transition-colors duration-200 min-w-0"
+        title="Search across all features"
       >
-        <Search size={18} />
-        <span className="hidden sm:inline">Search...</span>
+        <Search size={18} className="flex-shrink-0" />
+        <span className="hidden sm:inline text-sm font-medium">Search...</span>
       </button>
 
       {/* Search Overlay */}
@@ -197,22 +198,33 @@ const UniversalSearch = ({ isOpen, onToggle, onClose }) => {
           />
           
           {/* Search Modal */}
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-4 bg-brand-white rounded-xl shadow-2xl z-50">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl mx-4 bg-brand-white rounded-xl shadow-2xl z-50 max-h-[90vh] flex flex-col sm:rounded-xl rounded-none sm:mx-4 mx-0 sm:top-1/2 top-0 sm:left-1/2 left-0 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 transform-none sm:max-h-[90vh] max-h-screen h-screen sm:h-auto">
             {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-              <Search className="text-gray-400" size={20} />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search across all features..."
-                className="w-80 text-lg outline-none placeholder-gray-400 text-[#811429]"
-                autoFocus
-              />
+              <Search className="text-gray-400 flex-shrink-0" size={20} />
+              <div className="flex-1 min-w-0 relative">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search across all features..."
+                  className="w-full text-lg outline-none placeholder-gray-400 text-[#811429] bg-transparent"
+                  autoFocus
+                  style={{ minWidth: '200px' }}
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery('')}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                  >
+                    <X size={16} className="text-gray-400" />
+                  </button>
+                )}
+              </div>
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex-shrink-0"
               >
                 <X size={20} />
               </button>
@@ -236,7 +248,7 @@ const UniversalSearch = ({ isOpen, onToggle, onClose }) => {
             </div>
 
             {/* Results */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {query.trim() === '' ? (
                 <div className="p-8 text-center text-gray-500">
                   <Search size={48} className="mx-auto mb-4 text-gray-300" />
