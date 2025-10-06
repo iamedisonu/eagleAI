@@ -13,7 +13,7 @@ FEATURES:
   - Actionable improvement suggestions
   - Structured feedback format
   - Automatic retry logic with exponential backoff
-  - Multiple model fallback (gemini-2.5-flash, gemini-1.5-flash, gemini-1.5-pro)
+  - Multiple model fallback (gemini-2.5-flash, gemini-1.5-flash)
   - Enhanced error handling for API overload (503) and rate limiting
 
 RETRY LOGIC:
@@ -45,11 +45,10 @@ const RETRY_CONFIG = {
   backoffMultiplier: 2
 };
 
-// Available models in order of preference
+// Available models in order of preference (v1beta API compatible)
 const MODELS = [
   'gemini-2.5-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro'
+  'gemini-1.5-flash'
 ];
 
 /**
@@ -88,7 +87,21 @@ const isRetryableError = (error) => {
     'fetch'
   ];
   
+  const nonRetryableErrors = [
+    '404', // Not Found (model not available)
+    'not found',
+    'not supported',
+    'invalid model'
+  ];
+  
   const errorMessage = error.message?.toLowerCase() || '';
+  
+  // If it's a non-retryable error, don't retry
+  if (nonRetryableErrors.some(nonRetryableError => errorMessage.includes(nonRetryableError))) {
+    return false;
+  }
+  
+  // Otherwise, check if it's retryable
   return retryableErrors.some(retryableError => errorMessage.includes(retryableError));
 };
 
@@ -100,6 +113,16 @@ const isRetryableError = (error) => {
 const getModel = (modelIndex = 0) => {
   const modelName = MODELS[modelIndex] || MODELS[0];
   return genAI.getGenerativeModel({ model: modelName });
+};
+
+/**
+ * Check if a model is available (basic validation)
+ * @param {string} modelName - Name of the model to check
+ * @returns {boolean} - Whether the model name is valid
+ */
+const isValidModel = (modelName) => {
+  // Basic validation - check if model name follows expected pattern
+  return modelName && typeof modelName === 'string' && modelName.startsWith('gemini-');
 };
 
 /**

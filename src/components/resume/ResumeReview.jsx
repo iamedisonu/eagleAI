@@ -97,6 +97,8 @@ const ResumeReview = () => {
         errorMessage = 'Please upload a PDF file only.';
       } else if (error.message.includes('File size')) {
         errorMessage = 'File size too large. Please upload a smaller PDF.';
+      } else if (error.message.includes('404') || error.message.includes('not found') || error.message.includes('not supported')) {
+        errorMessage = 'AI model is not available. Please try again later or contact support if the issue persists.';
       } else if (error.message.includes('503') || error.message.includes('overloaded')) {
         errorMessage = 'AI service is currently overloaded. We\'re automatically retrying with different models. Please wait a moment and try again.';
       } else if (error.message.includes('All models and retry attempts failed')) {
