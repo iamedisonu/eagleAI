@@ -25,64 +25,73 @@ USAGE:
 */
 
 import { useState } from 'react';
-import { FileText, Sparkles, Download, Copy, CheckCircle } from 'lucide-react';
+import { FileText, Sparkles, Download, Copy, CheckCircle, AlertCircle } from 'lucide-react';
 import ResumeUpload from './ResumeUpload';
 import ResumeAnalysis from './ResumeAnalysis';
+import { extractTextFromPDF, analyzeResume, extractJobContext } from '../../services/googleAI';
 
 const ResumeReview = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analysisData, setAnalysisData] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Mock analysis data for demonstration
-  const mockAnalysisData = {
-    overallScore: 7.2,
-    totalBullets: 3,
-    strongBullets: 2,
-    needsImprovement: 1,
-    bullets: [
-      {
-        id: 1,
-        original: "Developed a Python script to automate the generation of report cards, reducing manual time from days to seconds.",
-        score: 10,
-        feedback: "This is a strong bullet point with a clear action verb, specific technology, and quantified impact. The time reduction from 'days to seconds' is impressive and shows significant value. This is nearly perfect as written.",
-        improved: "Developed a Python script to automate the generation of report cards, reducing manual time from days to seconds.",
-        category: "Experience"
-      },
-      {
-        id: 2,
-        original: "Developed a WhatsApp learning chatbot using GPT-4 API and Manychat, improving content delivery for 198 students and reducing grading time by 85% through automatic feedback.",
-        score: 10,
-        feedback: "Excellent bullet point! It has a strong action verb, specific technologies (GPT-4 API, Manychat), clear beneficiaries (198 students), and quantified impact (85% reduction). This demonstrates both technical skills and measurable business value.",
-        improved: "Developed a WhatsApp learning chatbot using GPT-4 API and Manychat, improving content delivery for 198 students and reducing grading time by 85% through automatic feedback.",
-        category: "Experience"
-      },
-      {
-        id: 3,
-        original: "Worked on various software development projects",
-        score: 4,
-        feedback: "This bullet point is too vague and generic. It lacks specific technologies, quantifiable results, and doesn't demonstrate the impact of your work. Consider adding specific projects, technologies used, and measurable outcomes.",
-        improved: "Developed 3 full-stack web applications using React and Node.js, serving 500+ daily active users and reducing page load time by 40%",
-        category: "Projects"
-      }
-    ]
-  };
-
-  const handleFileUpload = (file) => {
+  const handleFileUpload = async (file) => {
     setUploadedFile(file);
     setIsAnalyzing(true);
+    setError(null);
     
-    // Simulate AI analysis delay
-    setTimeout(() => {
-      setAnalysisData(mockAnalysisData);
+    try {
+      // Extract text from PDF
+      const text = await extractTextFromPDF(file);
+      
+      if (!text || text.trim().length === 0) {
+        throw new Error('No text found in PDF. Please ensure the PDF contains selectable text.');
+      }
+      
+      // Analyze resume with AI
+      const analysis = await analyzeResume(text);
+      
+      // Enhance bullets with job context
+      const enhancedBullets = await Promise.all(
+        analysis.bullets.map(async (bullet, index) => {
+          try {
+            const jobContext = await extractJobContext(text, bullet.original);
+            return {
+              ...bullet,
+              id: index + 1,
+              jobTitle: jobContext.jobTitle,
+              company: jobContext.company
+            };
+          } catch (error) {
+            console.warn('Failed to extract job context for bullet:', error);
+            return {
+              ...bullet,
+              id: index + 1,
+              jobTitle: bullet.category === 'Experience' ? 'Software Developer' : 'Project',
+              company: 'Company'
+            };
+          }
+        })
+      );
+      
+      setAnalysisData({
+        ...analysis,
+        bullets: enhancedBullets
+      });
+    } catch (error) {
+      console.error('Error analyzing resume:', error);
+      setError(error.message || 'Failed to analyze resume. Please try again.');
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
   const handleNewUpload = () => {
     setUploadedFile(null);
     setAnalysisData(null);
     setIsAnalyzing(false);
+    setError(null);
   };
 
   return (
@@ -102,12 +111,21 @@ const ResumeReview = () => {
               <ResumeUpload onFileUpload={handleFileUpload} />
             ) : (
               <div className="text-center py-8">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-center gap-2 text-green-700">
-                    <CheckCircle size={20} />
-                    <span className="font-medium">File uploaded successfully</span>
+                {error ? (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-center gap-2 text-red-700">
+                      <AlertCircle size={20} />
+                      <span className="font-medium">{error}</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-center gap-2 text-green-700">
+                      <CheckCircle size={20} />
+                      <span className="font-medium">File uploaded successfully</span>
+                    </div>
+                  </div>
+                )}
                 <button
                   onClick={handleNewUpload}
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"

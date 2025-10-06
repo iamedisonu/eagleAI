@@ -25,6 +25,7 @@ const ResumeUpload = ({ onFileUpload }) => {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [uploadedFile, setUploadedFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDrag = (e) => {
@@ -69,7 +70,7 @@ const ResumeUpload = ({ onFileUpload }) => {
     }
     
     setUploadedFileName(file.name);
-    onFileUpload(file);
+    setUploadedFile(file);
   };
 
   const openFileDialog = () => {
@@ -122,10 +123,10 @@ const ResumeUpload = ({ onFileUpload }) => {
       )}
 
       {/* Get Feedback Button */}
-      {uploadedFileName && (
+      {uploadedFileName && uploadedFile && (
         <div className="mt-6 text-center">
           <button
-            onClick={() => onFileUpload({ name: uploadedFileName })}
+            onClick={() => onFileUpload(uploadedFile)}
             className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200"
           >
             Get Feedback

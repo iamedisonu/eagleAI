@@ -41,9 +41,11 @@ const ResumeFeedback = ({
       {/* Job Title and Company */}
       <div className="mb-4">
         <h3 className="text-lg font-bold text-gray-900 mb-2">
-          {bullet.category === 'Experience' ? 'IT Support Intern, Bridge2Rwanda' : 
-           bullet.category === 'Projects' ? 'Software Developer, Personal Project' : 
-           `${bullet.category} Experience`}
+          {bullet.jobTitle && bullet.company ? 
+            `${bullet.jobTitle}, ${bullet.company}` : 
+            bullet.category === 'Experience' ? 'IT Support Intern, Bridge2Rwanda' : 
+            bullet.category === 'Projects' ? 'Software Developer, Personal Project' : 
+            `${bullet.category} Experience`}
         </h3>
       </div>
 
