@@ -28,31 +28,73 @@ const genAI = new GoogleGenerativeAI(GOOGLE_AI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 /**
- * Extract text from PDF using PDF.co API
+ * Upload file to PDF.co temporary storage
+ * @param {File} file - PDF file object
+ * @returns {Promise<string>} - Uploaded file URL
+ */
+const uploadFileToPDFCo = async (file) => {
+  try {
+    console.log('Uploading file to PDF.co...');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadResponse = await fetch('https://api.pdf.co/v1/file/upload', {
+      method: 'POST',
+      headers: {
+        'x-api-key': PDF_CO_API_KEY
+      },
+      body: formData
+    });
+    
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`PDF.co upload error: ${uploadResponse.status} - ${errorText}`);
+    }
+    
+    const uploadResult = await uploadResponse.json();
+    console.log('PDF.co upload response:', uploadResult);
+    
+    if (uploadResult.error) {
+      throw new Error(`PDF.co upload failed: ${uploadResult.message}`);
+    }
+    
+    if (!uploadResult.url) {
+      throw new Error('No URL returned from PDF.co upload');
+    }
+    
+    console.log('File uploaded successfully to PDF.co:', uploadResult.url);
+    return uploadResult.url;
+    
+  } catch (error) {
+    console.warn('PDF.co upload failed:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * Extract text from PDF using PDF.co API (two-step process)
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
 const extractTextFromPDFCo = async (file) => {
   try {
-    console.log('Attempting PDF parsing with PDF.co API...');
+    console.log('Starting PDF.co two-step process...');
     
-    // Convert file to base64
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    // Step 1: Upload file to PDF.co
+    const uploadedFileUrl = await uploadFileToPDFCo(file);
     
-    // PDF.co API endpoint for text extraction
-    const apiUrl = 'https://api.pdf.co/v1/pdf/convert/to/text';
+    // Step 2: Process the uploaded file
+    console.log('Processing uploaded file with PDF.co...');
     
     const requestBody = {
-      file: `data:application/pdf;base64,${base64}`,
-      inline: true,
+      url: uploadedFileUrl,
+      pages: '0-',
       async: false,
-      lang: 'eng',
-      pages: '0-'
+      lang: 'eng'
     };
     
-    console.log('Sending request to PDF.co API...');
-    const response = await fetch(apiUrl, {
+    const processResponse = await fetch('https://api.pdf.co/v1/pdf/convert/to/text', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -62,16 +104,16 @@ const extractTextFromPDFCo = async (file) => {
       body: JSON.stringify(requestBody)
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`PDF.co API error: ${response.status} - ${errorText}`);
+    if (!processResponse.ok) {
+      const errorText = await processResponse.text();
+      throw new Error(`PDF.co processing error: ${processResponse.status} - ${errorText}`);
     }
     
-    const result = await response.json();
-    console.log('PDF.co API response received:', result);
+    const result = await processResponse.json();
+    console.log('PDF.co processing response:', result);
     
     if (result.error) {
-      throw new Error(`PDF.co API error: ${result.message || result.error}`);
+      throw new Error(`PDF.co processing failed: ${result.message || result.error}`);
     }
     
     // PDF.co returns text in different possible fields
