@@ -37,7 +37,11 @@ export const extractTextFromPDF = async (file) => {
       console.log('PDF file received:', file.name, 'Size:', file.size);
       
       // Dynamic import to avoid build issues
-      const { getDocument } = await import('react-pdf');
+      const pdfjsLib = await import('react-pdf');
+      
+      // react-pdf exports pdfjsLib as default
+      const pdfjs = pdfjsLib.default || pdfjsLib;
+      const getDocument = pdfjs.getDocument;
       
       const reader = new FileReader();
       
