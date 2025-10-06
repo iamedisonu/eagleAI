@@ -74,8 +74,11 @@ const extractTextFromPDFLib = async (arrayBuffer) => {
     console.warn('pdf-lib extraction failed:', error.message);
     console.log('pdf-lib error details:', error);
     
-    // Check if it's a specific error type
-    if (error.message.includes('password') || error.message.includes('encrypted')) {
+    // Check if it's a specific error type - be more precise
+    if (error.message.includes('password required') || 
+        error.message.includes('encrypted') || 
+        error.message.includes('password-protected') ||
+        error.message.includes('authentication required')) {
       throw new Error('Password-protected or encrypted PDF detected');
     }
     
@@ -162,6 +165,14 @@ export const extractTextFromPDF = async (file) => {
     } catch (pdfLibError) {
       console.warn('pdf-lib extraction failed, trying raw text extraction:', pdfLibError.message);
       console.log('pdf-lib error details:', pdfLibError);
+      
+      // Check if this is actually a password error
+      if (pdfLibError.message.includes('password required') || 
+          pdfLibError.message.includes('password-protected') || 
+          pdfLibError.message.includes('authentication required') ||
+          pdfLibError.message.includes('encrypted PDF')) {
+        throw new Error('Password-protected PDF detected. Please remove the password and try again.');
+      }
     }
 
     // Fallback to raw text extraction
@@ -207,17 +218,20 @@ export const extractTextFromPDF = async (file) => {
     // Provide more specific error messages
     if (error.message.includes('Invalid PDF') || error.message.includes('invalid PDF')) {
       throw new Error('Invalid PDF file. Please ensure the file is a valid PDF document.');
-    } else if (error.message.includes('password') && (error.message.includes('required') || error.message.includes('protected'))) {
+    } else if (error.message.includes('password required') || 
+               error.message.includes('password-protected') || 
+               error.message.includes('authentication required') ||
+               error.message.includes('encrypted PDF')) {
       throw new Error('Password-protected PDF detected. Please remove the password and try again.');
     } else if (error.message.includes('network')) {
       throw new Error('Network error while processing PDF. Please check your internet connection and try again.');
     } else if (error.message.includes('timeout')) {
       throw new Error('PDF processing timed out. The file might be too complex. Please try with a simpler PDF.');
-    } else if (error.message.includes('encrypted') || error.message.includes('Encrypted')) {
-      throw new Error('Encrypted PDF detected. Please remove the encryption and try again.');
     } else {
       // For debugging, let's see what the actual error is
       console.log('Actual error details:', error);
+      console.log('Error message:', error.message);
+      console.log('Error stack:', error.stack);
       throw new Error('Failed to extract text from PDF. Please try with a different PDF file or ensure the file is not corrupted.');
     }
   }
