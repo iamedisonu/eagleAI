@@ -93,73 +93,81 @@ const ResumeReview = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-          {/* Left Column - Resume Review */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Resume Review</h1>
-                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                      Currently, the resume review tool will only give feedback on your bullet points for experiences and projects. 
-                      This does not serve as a complete resume review, so you should still seek feedback from peers. 
-                      Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
-                    </p>
-            
-            {!uploadedFile ? (
+        {!uploadedFile ? (
+          /* Initial Upload State - Two Column Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+            {/* Left Column - Resume Review */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h1 className="text-2xl font-bold text-gray-900 mb-3">Resume Review</h1>
+              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                Currently, the resume review tool will only give feedback on your bullet points for experiences and projects. 
+                This does not serve as a complete resume review, so you should still seek feedback from peers. 
+                Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
+              </p>
               <ResumeUpload onFileUpload={handleFileUpload} />
-            ) : (
+            </div>
+
+            {/* Right Column - Instructions */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h1 className="text-2xl font-bold text-gray-900 mb-3">How It Works</h1>
               <div className="text-center py-8">
-                {error ? (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-center gap-2 text-red-700">
-                      <AlertCircle size={20} />
-                      <span className="font-medium">{error}</span>
+                <div className="text-gray-400 mb-3">
+                  <FileText size={40} className="mx-auto" />
+                </div>
+                <p className="text-gray-500">Upload your resume to see AI-powered feedback</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* After Upload - Full Screen Feedback */
+          <div className="w-full">
+            {/* Top Navigation Bar */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl font-bold text-gray-900">Resume Analysis Results</h1>
+                  {error ? (
+                    <div className="flex items-center gap-2 text-red-700">
+                      <AlertCircle size={18} />
+                      <span className="font-medium text-sm">{error}</span>
                     </div>
-                  </div>
-                ) : (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-center gap-2 text-green-700">
-                      <CheckCircle size={20} />
-                      <span className="font-medium">File uploaded successfully</span>
+                  ) : (
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle size={18} />
+                      <span className="font-medium text-sm">Analysis Complete</span>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
                 <button
                   onClick={handleNewUpload}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  className="flex items-center gap-2 px-3 py-2 bg-brand-maroon text-white rounded-lg hover:bg-brand-crimson transition-colors duration-200 text-sm"
                 >
-                  Upload a different file
+                  <FileText size={14} />
+                  Upload New Resume
                 </button>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Right Column - Feedback */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Feedback</h1>
-            
-            {!uploadedFile ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 mb-4">
-                  <FileText size={48} className="mx-auto" />
+            {/* Full Screen Feedback */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              {isAnalyzing ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-maroon mx-auto mb-4"></div>
+                  <p className="text-gray-600">Analyzing your resume...</p>
                 </div>
-                <p className="text-gray-500">Upload your resume to see feedback</p>
-              </div>
-            ) : isAnalyzing ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Analyzing your resume...</p>
-              </div>
-            ) : analysisData ? (
-              <ResumeAnalysis 
-                file={uploadedFile}
-                analysisData={analysisData}
-                isAnalyzing={isAnalyzing}
-                onNewUpload={handleNewUpload}
-              />
-            ) : null}
+              ) : analysisData ? (
+                <ResumeAnalysis 
+                  file={uploadedFile}
+                  analysisData={analysisData}
+                  isAnalyzing={isAnalyzing}
+                  onNewUpload={handleNewUpload}
+                />
+              ) : null}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

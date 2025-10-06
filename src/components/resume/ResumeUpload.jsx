@@ -94,11 +94,11 @@ const ResumeUpload = ({ onFileUpload }) => {
     <div className="w-full">
       {/* Upload area */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-12 transition-all duration-200 ${
-          dragActive
-            ? 'border-green-400 bg-green-50'
-            : 'border-gray-300 hover:border-green-400 hover:bg-gray-50'
-        }`}
+                className={`relative border-2 border-dashed rounded-lg p-12 transition-all duration-200 ${
+                  dragActive
+                    ? 'border-brand-maroon bg-primary-50'
+                    : 'border-gray-300 hover:border-brand-maroon hover:bg-primary-50'
+                }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -112,42 +112,42 @@ const ResumeUpload = ({ onFileUpload }) => {
           className="hidden"
         />
         
-        <div className="flex flex-col items-center text-center">
-          <div className="bg-green-100 p-6 rounded-full mb-6">
-            <Upload className="text-green-600" size={48} />
-          </div>
-          
-          <p className="text-gray-700 mb-2 text-lg">
-            Drag and drop or <span className="text-green-600 font-semibold cursor-pointer" onClick={openFileDialog}>browse</span> to upload your file.
-          </p>
-          
-          <p className="text-gray-500 text-sm">
-            PDF (Max Size: 5 MB)
-          </p>
-        </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="bg-primary-100 p-6 rounded-full mb-6">
+                    <Upload className="text-brand-maroon" size={48} />
+                  </div>
+                  
+                  <p className="text-gray-700 mb-2 text-lg">
+                    Drag and drop or <span className="text-brand-maroon font-semibold cursor-pointer" onClick={openFileDialog}>browse</span> to upload your file.
+                  </p>
+                  
+                  <p className="text-gray-500 text-sm">
+                    PDF (Max Size: 5 MB)
+                  </p>
+                </div>
       </div>
 
       {/* File Preview */}
       {uploadedFileName && uploadedFile && (
-        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <FileText className="text-green-600" size={24} />
+            <div className="bg-primary-100 p-2 rounded-lg">
+              <FileText className="text-brand-maroon" size={24} />
             </div>
             <div className="flex-1">
-              <p className="text-green-800 font-medium">{uploadedFileName}</p>
-              <p className="text-green-600 text-sm">
+              <p className="text-brand-maroon font-medium">{uploadedFileName}</p>
+              <p className="text-primary-600 text-sm">
                 {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="text-green-600" size={20} />
+              <CheckCircle className="text-brand-maroon" size={20} />
               <button
                 onClick={removeFile}
-                className="p-1 rounded-full hover:bg-green-200 transition-colors duration-200"
+                className="p-1 rounded-full hover:bg-primary-200 transition-colors duration-200"
                 title="Remove file"
               >
-                <X className="text-green-600" size={16} />
+                <X className="text-brand-maroon" size={16} />
               </button>
             </div>
           </div>
@@ -165,15 +165,15 @@ const ResumeUpload = ({ onFileUpload }) => {
       {/* Get Feedback Button */}
       {uploadedFileName && uploadedFile && (
         <div className="mt-6 text-center">
-          <button
-            onClick={() => {
-              console.log('Get Feedback clicked, file:', uploadedFile);
-              onFileUpload(uploadedFile);
-            }}
-            className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200"
-          >
-            Get Feedback
-          </button>
+                  <button
+                    onClick={() => {
+                      console.log('Get Feedback clicked, file:', uploadedFile);
+                      onFileUpload(uploadedFile);
+                    }}
+                    className="bg-brand-maroon text-white px-8 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200"
+                  >
+                    Get Feedback
+                  </button>
         </div>
       )}
 
