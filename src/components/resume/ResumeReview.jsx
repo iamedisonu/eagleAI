@@ -50,6 +50,7 @@ const ResumeReview = () => {
     setUploadedFile(file);
     setIsAnalyzing(true);
     setError(null);
+    setAnalysisData(null); // Clear previous analysis
     
     try {
       console.log('Step 1: Extracting text from PDF...');
@@ -70,13 +71,72 @@ const ResumeReview = () => {
       const analysis = await analyzeResume(extractionResult.fetchedText);
       console.log('Step 2 Complete: AI analysis completed:', analysis);
       
-      console.log('Step 3: Setting analysis data...');
-      setAnalysisData(analysis);
-      console.log('=== FILE UPLOAD COMPLETE ===');
+      // Check if analysis was successful
+      if (analysis && analysis.parsedResponse) {
+        console.log('Step 3: Setting analysis data...');
+        setAnalysisData(analysis);
+        setError(null); // Clear any previous errors
+        console.log('=== FILE UPLOAD COMPLETE ===');
+      } else {
+        throw new Error('AI analysis returned invalid data. Please try again.');
+      }
     } catch (error) {
       console.error('=== FILE UPLOAD ERROR ===');
       console.error('Error details:', error);
-      setError(error.message || 'Failed to analyze resume. Please try again.');
+      
+      // Set a more specific error message
+      let errorMessage = 'Failed to analyze resume. Please try again.';
+      
+      if (error.message.includes('No text found')) {
+        errorMessage = 'No text found in PDF. Please ensure the PDF contains selectable text.';
+      } else if (error.message.includes('Invalid file type')) {
+        errorMessage = 'Please upload a PDF file only.';
+      } else if (error.message.includes('File size')) {
+        errorMessage = 'File size too large. Please upload a smaller PDF.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message.includes('API')) {
+        errorMessage = 'AI service temporarily unavailable. Please try again in a few minutes.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      
+      // Create a fallback analysis for display
+      const fallbackAnalysis = {
+        rawResponse: `Error: ${errorMessage}`,
+        parsedResponse: {
+          overallScore: 3,
+          categoryScores: {
+            bulletPoints: 3,
+            header: 3,
+            education: 3,
+            experience: 3,
+            secondarySections: 3,
+            formatting: 3,
+            language: 3,
+            contentQuality: 3,
+            targeting: 3,
+            universalStandards: 3
+          },
+          strengths: ["Resume uploaded successfully"],
+          priorityImprovements: ["Analysis encountered an error - please try again"],
+          overallAssessment: `Analysis failed: ${errorMessage}`,
+          detailedFeedback: [{
+            category: "System",
+            location: "Overall",
+            currentProblem: "Analysis failed to complete",
+            whyItMatters: "Unable to provide detailed feedback due to technical issues",
+            solution: "Please try uploading your resume again",
+            rephrasedExample: "Retry the analysis process",
+            score: 3
+          }]
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      setAnalysisData(fallbackAnalysis);
     } finally {
       setIsAnalyzing(false);
     }

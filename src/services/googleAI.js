@@ -237,163 +237,268 @@ export const extractTextFromPDF = async (file) => {
  */
 export const analyzeResume = async (text) => {
   try {
-        const prompt = `
-            You are an expert resume reviewer with over 10 years of experience helping students across all majors land internships and full-time positions. Evaluate this resume using the universal "What, How, Why" framework and provide actionable, specific feedback tailored to the student's field and career goals.
+    console.log('Starting resume analysis...');
+    console.log('Text length:', text.length);
+    console.log('Text preview:', text.substring(0, 200) + '...');
 
-            IMPORTANT: Today's date is ${new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}. Use this date to provide accurate feedback about graduation dates, experience timelines, and current industry standards.
+    // Validate input text
+    if (!text || text.trim().length === 0) {
+      throw new Error('No text content provided for analysis');
+    }
 
-            Resume to review: "${text}"
+    if (text.length < 50) {
+      throw new Error('Resume text is too short for meaningful analysis');
+    }
 
-            Please analyze this resume comprehensively using the following 10 categories and provide detailed feedback:
+    const prompt = `
+You are an expert resume reviewer with over 10 years of experience helping students across all majors land internships and full-time positions. Evaluate this resume using the universal "What, How, Why" framework and provide actionable, specific feedback tailored to the student's field and career goals.
 
-            Category 1: Bullet Point Structure (What / How / Why)
-            - WHAT: Each bullet point clearly states the action taken, project completed, or contribution made
-            - HOW: Methods, tools, skills, or approaches used are explicitly mentioned
-            - WHY: Impact is demonstrated through quantifiable or qualitative results
+IMPORTANT: Today's date is ${new Date().toLocaleDateString('en-US', { 
+  weekday: 'long', 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric' 
+})}. Use this date to provide accurate feedback about graduation dates, experience timelines, and current industry standards.
 
-            Category 2: Profile Header & Contact Information
-            - Full name, location, professional phone/email, LinkedIn profile
-            - Professional appearance and accuracy
+Resume to review: "${text}"
 
-            Category 3: Education Section
-            - Institution, degree, major, graduation date, GPA
-            - Academic honors, relevant coursework, study abroad
+Please analyze this resume comprehensively using the following 10 categories and provide detailed feedback:
 
-            Category 4: Experience Section (Work, Research, Internships)
-            - Organization, location, position, dates
-            - 2-4 achievement-oriented bullet points per position
-            - Strong action verbs, accomplishments, quantified results
+Category 1: Bullet Point Structure (What / How / Why)
+- WHAT: Each bullet point clearly states the action taken, project completed, or contribution made
+- HOW: Methods, tools, skills, or approaches used are explicitly mentioned
+- WHY: Impact is demonstrated through quantifiable or qualitative results
 
-            Category 5: Optional Secondary Sections
-            - Leadership, community service, skills, projects, publications
-            - Relevance and specificity
+Category 2: Profile Header & Contact Information
+- Full name, location, professional phone/email, LinkedIn profile
+- Professional appearance and accuracy
 
-            Category 6: Visual Appearance & Formatting
-            - Clean, professional layout, consistent formatting
-            - Proper length, margins, font, file format
+Category 3: Education Section
+- Institution, degree, major, graduation date, GPA
+- Academic honors, relevant coursework, study abroad
 
-            Category 7: Language & Grammar
-            - No errors, varied sentence structure, professional tone
-            - Appropriate action verbs and tense consistency
+Category 4: Experience Section (Work, Research, Internships)
+- Organization, location, position, dates
+- 2-4 achievement-oriented bullet points per position
+- Strong action verbs, accomplishments, quantified results
 
-            Category 8: Content Quality & Relevance
-            - Coherent narrative, logical progression, specificity
-            - Transferable skills demonstration
+Category 5: Optional Secondary Sections
+- Leadership, community service, skills, projects, publications
+- Relevance and specificity
 
-            Category 9: Contextualization & Targeting
-            - Job alignment, industry appropriateness, keyword usage
+Category 6: Visual Appearance & Formatting
+- Clean, professional layout, consistent formatting
+- Proper length, margins, font, file format
 
-            Category 10: Critical Universal Standards
-            - Must include: Header, Education, Experience sections
-            - Must avoid: Personal info, references, first-person pronouns
+Category 7: Language & Grammar
+- No errors, varied sentence structure, professional tone
+- Appropriate action verbs and tense consistency
 
-                    For each issue identified, provide this exact structure:
-                    - Location: Specific section and bullet point
-                    - Current Problem: Quote the exact problematic text
-                    - Why It Matters: Explain the specific impact on the resume
-                    - Solution: Explain the general principle for improvement
-                    - Rephrased Example: Show the exact same content rewritten better
+Category 8: Content Quality & Relevance
+- Coherent narrative, logical progression, specificity
+- Transferable skills demonstration
 
-            Use the 10-Point Scoring System:
-            - 9-10: Exceptional/Outstanding
-            - 7-8: Good/Above Average
-            - 5-6: Average/Acceptable
-            - 3-4: Below Average/Needs Improvement
-            - 1-2: Poor/Unacceptable
+Category 9: Contextualization & Targeting
+- Job alignment, industry appropriateness, keyword usage
 
-                    IMPORTANT: For any score that is NOT 10/10, you MUST provide specific suggestions on how to improve that particular aspect to reach a perfect score. Include concrete examples and actionable steps.
+Category 10: Critical Universal Standards
+- Must include: Header, Education, Experience sections
+- Must avoid: Personal info, references, first-person pronouns
 
-                    FORMATTING: Use markdown formatting in your responses:
-                    - Use **bold** for emphasis on important terms
-                    - Use *italics* for subtle emphasis
-                    - Use bullet points with - for lists
-                    - Use numbered lists with 1. 2. 3. for steps
-                    - Use `code` for specific technical terms or phrases
+For each issue identified, provide this exact structure:
+- Location: Specific section and bullet point
+- Current Problem: Quote the exact problematic text
+- Why It Matters: Explain the specific impact on the resume
+- Solution: Explain the general principle for improvement
+- Rephrased Example: Show the exact same content rewritten better
 
-            Return a JSON object with this structure:
-            {
-              "overallScore": number (1-10),
-              "categoryScores": {
-                "bulletPoints": number (1-10),
-                "header": number (1-10),
-                "education": number (1-10),
-                "experience": number (1-10),
-                "secondarySections": number (1-10),
-                "formatting": number (1-10),
-                "language": number (1-10),
-                "contentQuality": number (1-10),
-                "targeting": number (1-10),
-                "universalStandards": number (1-10)
-              },
-              "improvementSuggestions": {
-                "bulletPoints": string (only if score < 10),
-                "header": string (only if score < 10),
-                "education": string (only if score < 10),
-                "experience": string (only if score < 10),
-                "secondarySections": string (only if score < 10),
-                "formatting": string (only if score < 10),
-                "language": string (only if score < 10),
-                "contentQuality": string (only if score < 10),
-                "targeting": string (only if score < 10),
-                "universalStandards": string (only if score < 10)
-              },
-                      "detailedFeedback": [
-                        {
-                          "category": string,
-                          "location": string,
-                          "currentProblem": string,
-                          "whyItMatters": string,
-                          "solution": string,
-                          "rephrasedExample": string,
-                          "score": number (1-10)
-                        }
-                      ],
-              "strengths": [string],
-              "priorityImprovements": [string],
-              "overallAssessment": string
-            }
-            `;
+Use the 10-Point Scoring System:
+- 9-10: Exceptional/Outstanding
+- 7-8: Good/Above Average
+- 5-6: Average/Acceptable
+- 3-4: Below Average/Needs Improvement
+- 1-2: Poor/Unacceptable
+
+IMPORTANT: For any score that is NOT 10/10, you MUST provide specific suggestions on how to improve that particular aspect to reach a perfect score. Include concrete examples and actionable steps.
+
+Return a JSON object with this structure:
+{
+  "overallScore": number (1-10),
+  "categoryScores": {
+    "bulletPoints": number (1-10),
+    "header": number (1-10),
+    "education": number (1-10),
+    "experience": number (1-10),
+    "secondarySections": number (1-10),
+    "formatting": number (1-10),
+    "language": number (1-10),
+    "contentQuality": number (1-10),
+    "targeting": number (1-10),
+    "universalStandards": number (1-10)
+  },
+  "improvementSuggestions": {
+    "bulletPoints": string (only if score < 10),
+    "header": string (only if score < 10),
+    "education": string (only if score < 10),
+    "experience": string (only if score < 10),
+    "secondarySections": string (only if score < 10),
+    "formatting": string (only if score < 10),
+    "language": string (only if score < 10),
+    "contentQuality": string (only if score < 10),
+    "targeting": string (only if score < 10),
+    "universalStandards": string (only if score < 10)
+  },
+  "detailedFeedback": [
+    {
+      "category": string,
+      "location": string,
+      "currentProblem": string,
+      "whyItMatters": string,
+      "solution": string,
+      "rephrasedExample": string,
+      "score": number (1-10)
+    }
+  ],
+  "strengths": [string],
+  "priorityImprovements": [string],
+  "overallAssessment": string
+}
+
+CRITICAL: You must return ONLY valid JSON. Do not include any text before or after the JSON object.
+`;
 
     console.log('Sending request to Google AI...');
+    console.log('Using model: gemini-2.5-flash');
+    console.log('Prompt length:', prompt.length);
+    
     const result = await model.generateContent(prompt);
+    console.log('Got result from Google AI');
+    
     const response = await result.response;
+    console.log('Got response from Google AI');
+    
     const analysisText = response.text();
-    
     console.log('AI Response received, length:', analysisText.length);
-    console.log('Full AI Response:', analysisText);
+    console.log('First 500 characters of response:', analysisText.substring(0, 500));
     
-    // Try to parse the JSON response first
+    // Try to parse the JSON response
     try {
-      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+      // Clean the response text - remove any markdown formatting or extra text
+      let cleanText = analysisText.trim();
+      
+      // Remove markdown code blocks if present
+      if (cleanText.startsWith('```json')) {
+        cleanText = cleanText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanText.startsWith('```')) {
+        cleanText = cleanText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // Find JSON object in the response
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsedAnalysis = JSON.parse(jsonMatch[0]);
-        console.log('Parsed JSON analysis:', parsedAnalysis);
+        console.log('Found JSON match, attempting to parse...');
+        const jsonString = jsonMatch[0];
+        console.log('JSON string length:', jsonString.length);
         
-        // Return both parsed and raw response
-        return {
-          rawResponse: analysisText,
-          parsedResponse: parsedAnalysis,
-          timestamp: new Date().toISOString()
-        };
+        const parsedAnalysis = JSON.parse(jsonString);
+        console.log('Successfully parsed JSON analysis');
+        
+        // Validate that we have the expected structure
+        if (parsedAnalysis.overallScore !== undefined && parsedAnalysis.categoryScores) {
+          console.log('Valid analysis structure found');
+          return {
+            rawResponse: analysisText,
+            parsedResponse: parsedAnalysis,
+            timestamp: new Date().toISOString()
+          };
+        } else {
+          console.warn('Parsed JSON but missing expected structure');
+          console.warn('Parsed analysis keys:', Object.keys(parsedAnalysis));
+        }
+      } else {
+        console.warn('No JSON object found in AI response');
+        console.warn('Response starts with:', cleanText.substring(0, 100));
       }
     } catch (parseError) {
-      console.warn('Failed to parse JSON response:', parseError);
+      console.error('Failed to parse JSON response:', parseError);
+      console.error('Response that failed to parse:', analysisText.substring(0, 1000));
     }
     
-    // If JSON parsing fails, return raw response
+    // If JSON parsing fails, create a fallback structure
+    console.log('JSON parsing failed, creating fallback analysis structure...');
+    
+    const fallbackAnalysis = {
+      overallScore: 5,
+      categoryScores: {
+        bulletPoints: 5,
+        header: 5,
+        education: 5,
+        experience: 5,
+        secondarySections: 5,
+        formatting: 5,
+        language: 5,
+        contentQuality: 5,
+        targeting: 5,
+        universalStandards: 5
+      },
+      strengths: ["Resume uploaded successfully"],
+      priorityImprovements: ["Analysis encountered an error - please try again"],
+      overallAssessment: "Analysis completed with limited functionality. Please review the raw response for detailed feedback.",
+      detailedFeedback: [{
+        category: "System",
+        location: "Overall",
+        currentProblem: "Analysis failed to complete",
+        whyItMatters: "Unable to provide detailed feedback due to technical issues",
+        solution: "Please try uploading your resume again",
+        rephrasedExample: "Retry the analysis process",
+        score: 3
+      }]
+    };
+    
+    console.log('Created fallback analysis structure');
+    
     return {
       rawResponse: analysisText,
-      parsedResponse: null,
+      parsedResponse: fallbackAnalysis,
       timestamp: new Date().toISOString()
     };
   } catch (error) {
     console.error('Error analyzing resume:', error);
-    throw new Error('Failed to analyze resume: ' + error.message);
+    
+    // Create error-specific fallback
+    const errorAnalysis = {
+      overallScore: 3,
+      categoryScores: {
+        bulletPoints: 3,
+        header: 3,
+        education: 3,
+        experience: 3,
+        secondarySections: 3,
+        formatting: 3,
+        language: 3,
+        contentQuality: 3,
+        targeting: 3,
+        universalStandards: 3
+      },
+      strengths: ["Resume uploaded successfully"],
+      priorityImprovements: ["Analysis encountered an error - please try again"],
+      overallAssessment: `Analysis failed: ${error.message}`,
+      detailedFeedback: [{
+        category: "System",
+        location: "Overall",
+        currentProblem: "Analysis failed to complete",
+        whyItMatters: "Unable to provide detailed feedback due to technical issues",
+        solution: "Please try uploading your resume again",
+        rephrasedExample: "Retry the analysis process",
+        score: 3
+      }]
+    };
+    
+    return {
+      rawResponse: `Error: ${error.message}`,
+      parsedResponse: errorAnalysis,
+      timestamp: new Date().toISOString()
+    };
   }
 };
 

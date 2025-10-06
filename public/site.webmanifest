@@ -1,0 +1,16 @@
+{
+  "name": "EagleAI - Career Intelligence Platform",
+  "short_name": "EagleAI",
+  "description": "AI-powered career intelligence platform helping students make informed career decisions",
+  "icons": [
+    {
+      "src": "/brain-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff"
+}

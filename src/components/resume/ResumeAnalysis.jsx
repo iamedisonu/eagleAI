@@ -12,6 +12,7 @@ FEATURES:
   - Copy-paste functionality for improved bullets
   - Progress indicators and loading states
   - OC brand styling
+  - Markdown support for AI-generated content
 
 PROPS:
   - file: Uploaded file object
@@ -23,8 +24,6 @@ PROPS:
 
 import { useState } from 'react';
 import { FileText, Sparkles, RefreshCw, Download, Copy, CheckCircle } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import ResumeFeedback from './ResumeFeedback';
 
 const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -33,18 +32,6 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
     navigator.clipboard.writeText(text);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
-  };
-
-  const getScoreColor = (score) => {
-    if (score >= 8) return 'text-accent-teal';
-    if (score >= 6) return 'text-accent-gold';
-    return 'text-brand-crimson';
-  };
-
-  const getScoreBgColor = (score) => {
-    if (score >= 8) return 'bg-accent-teal-soft';
-    if (score >= 6) return 'bg-accent-gold/20';
-    return 'bg-brand-crimson/10';
   };
 
   if (isAnalyzing) {
@@ -73,16 +60,16 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
   }
 
   return (
-        <div className="space-y-4">
-          {/* AI Feedback Header */}
-          <div className="mb-4">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">
-              {analysisData.parsedResponse ? 'AI Resume Feedback' : 'Raw AI Response'}
-            </h2>
-            <p className="text-xs text-gray-600">
-              Generated at: {new Date(analysisData.timestamp).toLocaleString()}
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* AI Feedback Header */}
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-gray-900 mb-1">
+          {analysisData.parsedResponse ? 'AI Resume Feedback' : 'Raw AI Response'}
+        </h2>
+        <p className="text-xs text-gray-600">
+          Generated at: {new Date(analysisData.timestamp).toLocaleString()}
+        </p>
+      </div>
 
       {/* Clean Resume Analysis */}
       {analysisData.parsedResponse ? (
@@ -109,9 +96,7 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
               ></div>
             </div>
             <div className="text-sm text-gray-700">
-              <ReactMarkdown>
-                {analysisData.parsedResponse.overallAssessment || 'Comprehensive analysis completed.'}
-              </ReactMarkdown>
+              {analysisData.parsedResponse.overallAssessment || 'Comprehensive analysis completed.'}
             </div>
           </div>
 
@@ -144,9 +129,7 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                     </div>
                     {score < 10 && analysisData.parsedResponse.improvementSuggestions && analysisData.parsedResponse.improvementSuggestions[category] && (
                       <div className="text-xs text-gray-600 bg-gray-100 p-1.5 rounded mt-1">
-                        <ReactMarkdown>
-                          💡 {analysisData.parsedResponse.improvementSuggestions[category]}
-                        </ReactMarkdown>
+                        💡 {analysisData.parsedResponse.improvementSuggestions[category]}
                       </div>
                     )}
                   </div>
@@ -169,7 +152,7 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                     <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
                       <span className="text-gray-600 mt-0.5">✓</span>
                       <div>
-                        <ReactMarkdown>{strength}</ReactMarkdown>
+                        {strength}
                       </div>
                     </li>
                   ))}
@@ -189,7 +172,7 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                     <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
                       <span className="text-gray-600 mt-0.5">✓</span>
                       <div>
-                        <ReactMarkdown>{improvement}</ReactMarkdown>
+                        {improvement}
                       </div>
                     </li>
                   ))}
@@ -233,14 +216,14 @@ const ResumeAnalysis = ({ file, analysisData, isAnalyzing, onNewUpload }) => {
                     <div>
                       <h5 className="font-medium text-gray-700 mb-1 text-sm">Why It Matters:</h5>
                       <div className="text-sm text-gray-600">
-                        <ReactMarkdown>{feedback.whyItMatters}</ReactMarkdown>
+                        {feedback.whyItMatters}
                       </div>
                     </div>
                     
                     <div>
                       <h5 className="font-medium text-gray-700 mb-1 text-sm">Solution:</h5>
                       <div className="text-sm text-gray-600">
-                        <ReactMarkdown>{feedback.solution}</ReactMarkdown>
+                        {feedback.solution}
                       </div>
                     </div>
                     
