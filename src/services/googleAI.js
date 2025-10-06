@@ -46,13 +46,16 @@ const extractTextFromPDFCo = async (file) => {
     const requestBody = {
       file: `data:application/pdf;base64,${base64}`,
       inline: true,
-      async: false
+      async: false,
+      lang: 'eng',
+      pages: '0-'
     };
     
     console.log('Sending request to PDF.co API...');
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
         'x-api-key': PDF_CO_API_KEY
       },
@@ -65,18 +68,29 @@ const extractTextFromPDFCo = async (file) => {
     }
     
     const result = await response.json();
-    console.log('PDF.co API response received');
+    console.log('PDF.co API response received:', result);
     
     if (result.error) {
-      throw new Error(`PDF.co API error: ${result.message}`);
+      throw new Error(`PDF.co API error: ${result.message || result.error}`);
     }
     
-    if (result.body && result.body.length > 0) {
-      const extractedText = result.body.trim();
+    // PDF.co returns text in different possible fields
+    let extractedText = '';
+    if (result.body) {
+      extractedText = result.body;
+    } else if (result.text) {
+      extractedText = result.text;
+    } else if (result.url) {
+      // If result contains a URL, we might need to fetch the text content
+      extractedText = result.url;
+    }
+    
+    if (extractedText && extractedText.trim().length > 0) {
+      const finalText = extractedText.trim();
       console.log('PDF.co extraction successful!');
-      console.log('Total text length:', extractedText.length);
-      console.log('First 200 characters:', extractedText.substring(0, 200));
-      return extractedText;
+      console.log('Total text length:', finalText.length);
+      console.log('First 200 characters:', finalText.substring(0, 200));
+      return finalText;
     } else {
       throw new Error('No text content extracted from PDF');
     }
