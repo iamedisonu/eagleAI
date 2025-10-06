@@ -65,35 +65,8 @@ const ResumeReview = () => {
       const analysis = await analyzeResume(text);
       console.log('Step 2 Complete: AI analysis completed:', analysis);
       
-      // Enhance bullets with job context
-      console.log('Step 3: Enhancing bullets with job context...');
-      const enhancedBullets = await Promise.all(
-        analysis.bullets.map(async (bullet, index) => {
-          try {
-            const jobContext = await extractJobContext(text, bullet.original);
-            return {
-              ...bullet,
-              id: index + 1,
-              jobTitle: jobContext.jobTitle,
-              company: jobContext.company
-            };
-          } catch (error) {
-            console.warn('Failed to extract job context for bullet:', error);
-            return {
-              ...bullet,
-              id: index + 1,
-              jobTitle: bullet.category === 'Experience' ? 'Software Developer' : 'Project',
-              company: 'Company'
-            };
-          }
-        })
-      );
-      
-      console.log('Step 4: Setting analysis data...');
-      setAnalysisData({
-        ...analysis,
-        bullets: enhancedBullets
-      });
+      console.log('Step 3: Setting analysis data...');
+      setAnalysisData(analysis);
       console.log('=== FILE UPLOAD COMPLETE ===');
     } catch (error) {
       console.error('=== FILE UPLOAD ERROR ===');
