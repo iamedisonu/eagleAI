@@ -13,7 +13,7 @@ FEATURES:
   - Actionable improvement suggestions
   - Structured feedback format
   - Automatic retry logic with exponential backoff
-  - Multiple model fallback (gemini-2.5-flash, gemini-1.5-flash)
+  - Multiple model fallback (gemini-2.5-flash, gemini-2.5-flash-lite, gemini-2.0-flash)
   - Enhanced error handling for API overload (503) and rate limiting
 
 RETRY LOGIC:
@@ -45,10 +45,12 @@ const RETRY_CONFIG = {
   backoffMultiplier: 2
 };
 
-// Available models in order of preference (v1beta API compatible)
+// Available models in order of preference (October 2025 API compatible)
+// Note: Gemini 1.0 and 1.5 series models are deprecated as of April 2025
 const MODELS = [
-  'gemini-2.5-flash',
-  'gemini-1.5-flash'
+  'gemini-2.5-flash',      // Primary: Fast, low-latency interaction
+  'gemini-2.5-flash-lite', // Secondary: Cost-effective, lightweight
+  'gemini-2.0-flash'       // Fallback: For compatibility/older integrations
 ];
 
 /**
@@ -123,6 +125,17 @@ const getModel = (modelIndex = 0) => {
 const isValidModel = (modelName) => {
   // Basic validation - check if model name follows expected pattern
   return modelName && typeof modelName === 'string' && modelName.startsWith('gemini-');
+};
+
+/**
+ * Get the best available model for the task
+ * @param {string} taskType - Type of task (e.g., 'resume-analysis', 'general')
+ * @returns {string} - Best model name for the task
+ */
+const getBestModelForTask = (taskType = 'general') => {
+  // For resume analysis, we want fast and reliable models
+  // gemini-2.5-flash is optimal for this use case
+  return MODELS[0]; // gemini-2.5-flash
 };
 
 /**
