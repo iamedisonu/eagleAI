@@ -19,79 +19,77 @@ USAGE:
 */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as pdfjsLib from 'pdfjs-dist';
 
-const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
+const GOOGLE_AI_API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
+const PDF_CO_API_KEY = 'edison.u@eagles.oc.edu_FMWTRzjRcLn3n5uCuuUVUqJMbjJ1mJUShCcIuhjJydcBNuvNqnv4P5GjdZHRzFdb';
 
 // Initialize Google AI
-const genAI = new GoogleGenerativeAI(API_KEY);
+const genAI = new GoogleGenerativeAI(GOOGLE_AI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
 /**
- * Extract text from PDF using pdfjs-dist
- * @param {ArrayBuffer} arrayBuffer - PDF file data
+ * Extract text from PDF using PDF.co API
+ * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
-const extractTextFromPDFJS = async (arrayBuffer) => {
+const extractTextFromPDFCo = async (file) => {
   try {
-    console.log('Attempting PDF parsing with pdfjs-dist...');
+    console.log('Attempting PDF parsing with PDF.co API...');
     
-    // Load PDF document
-    const loadingTask = pdfjsLib.getDocument({
-      data: arrayBuffer,
-      useSystemFonts: true,
-      disableFontFace: false,
-      disableRange: false,
-      disableStream: false
+    // Convert file to base64
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    
+    // PDF.co API endpoint for text extraction
+    const apiUrl = 'https://api.pdf.co/v1/pdf/convert/to/text';
+    
+    const requestBody = {
+      file: `data:application/pdf;base64,${base64}`,
+      inline: true,
+      async: false
+    };
+    
+    console.log('Sending request to PDF.co API...');
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': PDF_CO_API_KEY
+      },
+      body: JSON.stringify(requestBody)
     });
-
-    const pdfDocument = await loadingTask.promise;
-    const pageCount = pdfDocument.numPages;
-    console.log('PDF loaded successfully. Pages:', pageCount);
     
-    let fullText = '';
-    let pagesWithText = 0;
-    
-    // Extract text from all pages
-    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-      try {
-        console.log(`Processing page ${pageNum}/${pageCount}...`);
-        const page = await pdfDocument.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        // Extract text items and clean them up
-        const pageText = textContent.items
-          .filter(item => item.str && item.str.trim().length > 0)
-          .map(item => item.str.trim())
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        if (pageText && pageText.length > 10) { // Only count pages with substantial text
-          fullText += pageText + '\n';
-          pagesWithText++;
-          console.log(`Page ${pageNum} text length:`, pageText.length);
-        }
-      } catch (pageError) {
-        console.warn(`Error processing page ${pageNum}:`, pageError.message);
-        // Continue with other pages
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`PDF.co API error: ${response.status} - ${errorText}`);
     }
     
-    console.log(`pdfjs-dist extraction completed. Pages with text: ${pagesWithText}/${pageCount}`);
-    return fullText.trim();
+    const result = await response.json();
+    console.log('PDF.co API response received');
+    
+    if (result.error) {
+      throw new Error(`PDF.co API error: ${result.message}`);
+    }
+    
+    if (result.body && result.body.length > 0) {
+      const extractedText = result.body.trim();
+      console.log('PDF.co extraction successful!');
+      console.log('Total text length:', extractedText.length);
+      console.log('First 200 characters:', extractedText.substring(0, 200));
+      return extractedText;
+    } else {
+      throw new Error('No text content extracted from PDF');
+    }
+    
   } catch (error) {
-    console.warn('pdfjs-dist extraction failed:', error.message);
-    console.log('pdfjs-dist error details:', error);
-    return '';
+    console.warn('PDF.co extraction failed:', error.message);
+    console.log('PDF.co error details:', error);
+    throw error;
   }
 };
 
 /**
- * Extract text from PDF file using pdfjs-dist with enhanced error handling
+ * Extract text from PDF file using PDF.co API
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
@@ -112,61 +110,19 @@ export const extractTextFromPDF = async (file) => {
       throw new Error('File size too large. Please upload a PDF smaller than 10MB.');
     }
 
-    console.log('Attempting PDF parsing with pdfjs-dist...');
-    const arrayBuffer = await file.arrayBuffer();
+    console.log('Attempting PDF parsing with PDF.co API...');
     
-    // Try pdfjs-dist extraction
-    try {
-      const text = await extractTextFromPDFJS(arrayBuffer);
-      if (text && text.trim().length > 0) {
-        console.log('PDF parsing successful with pdfjs-dist!');
-        console.log('Total text length:', text.length);
-        console.log('First 200 characters:', text.substring(0, 200));
-        return text;
-      } else {
-        console.log('pdfjs-dist returned empty text, trying raw extraction...');
-      }
-    } catch (pdfJSError) {
-      console.warn('pdfjs-dist extraction failed, trying raw text extraction:', pdfJSError.message);
-      console.log('pdfjs-dist error details:', pdfJSError);
-    }
-
-    // Fallback to raw text extraction
-    try {
-      console.log('Attempting raw text extraction...');
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const rawText = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
-      
-      // Extract text between common PDF text markers
-      const textMatches = rawText.match(/BT\s+.*?ET/gs);
-      if (textMatches && textMatches.length > 0) {
-        let extractedText = '';
-        for (const match of textMatches) {
-          // Extract text between parentheses (common in PDF text objects)
-          const textInParens = match.match(/\(([^)]+)\)/g);
-          if (textInParens) {
-            for (const textMatch of textInParens) {
-              const cleanText = textMatch.replace(/[()]/g, '').trim();
-              if (cleanText.length > 0) {
-                extractedText += cleanText + ' ';
-              }
-            }
-          }
-        }
-        
-        if (extractedText.trim().length > 0) {
-          const finalText = extractedText.replace(/\s+/g, ' ').trim();
-          console.log('Raw text extraction successful!');
-          console.log('Total text length:', finalText.length);
-          console.log('First 200 characters:', finalText.substring(0, 200));
-          return finalText;
-        }
-      }
-    } catch (rawError) {
-      console.warn('Raw text extraction failed:', rawError.message);
-    }
+    // Use PDF.co API for text extraction
+    const extractedText = await extractTextFromPDFCo(file);
     
-    throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
+    if (extractedText && extractedText.trim().length > 0) {
+      console.log('PDF parsing successful with PDF.co!');
+      console.log('Total text length:', extractedText.length);
+      console.log('First 200 characters:', extractedText.substring(0, 200));
+      return extractedText;
+    } else {
+      throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
+    }
     
   } catch (error) {
     console.error('PDF processing error:', error);
@@ -179,10 +135,12 @@ export const extractTextFromPDF = async (file) => {
                error.message.includes('authentication required') ||
                error.message.includes('encrypted PDF')) {
       throw new Error('Password-protected PDF detected. Please remove the password and try again.');
-    } else if (error.message.includes('network')) {
+    } else if (error.message.includes('network') || error.message.includes('fetch')) {
       throw new Error('Network error while processing PDF. Please check your internet connection and try again.');
     } else if (error.message.includes('timeout')) {
       throw new Error('PDF processing timed out. The file might be too complex. Please try with a simpler PDF.');
+    } else if (error.message.includes('PDF.co API error')) {
+      throw new Error(`PDF parsing service error: ${error.message}`);
     } else {
       // For debugging, let's see what the actual error is
       console.log('Actual error details:', error);
