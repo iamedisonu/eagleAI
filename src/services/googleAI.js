@@ -27,7 +27,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 /**
- * Extract text from PDF file using pdfjs-dist
+ * Extract text from PDF file using pdf-parse
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
@@ -37,10 +37,7 @@ export const extractTextFromPDF = async (file) => {
       console.log('PDF file received:', file.name, 'Size:', file.size);
       
       // Dynamic import to avoid build issues
-      const pdfjsLib = await import('pdfjs-dist');
-      
-      // Set up worker
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      const pdfParse = await import('pdf-parse');
       
       const reader = new FileReader();
       
@@ -48,30 +45,19 @@ export const extractTextFromPDF = async (file) => {
         try {
           const arrayBuffer = e.target.result;
           
-          // Load PDF document
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let fullText = '';
-          
-          console.log('PDF loaded, pages:', pdf.numPages);
-          
-          // Extract text from all pages
-          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(' ');
-            fullText += pageText + '\n';
-            console.log(`Page ${pageNum} text extracted:`, pageText.substring(0, 100) + '...');
-          }
+          // Parse PDF using pdf-parse
+          const data = await pdfParse.default(arrayBuffer);
+          const extractedText = data.text;
           
           console.log('PDF parsing completed successfully');
-          console.log('Total extracted text length:', fullText.length);
-          console.log('First 200 characters:', fullText.substring(0, 200));
+          console.log('Extracted text length:', extractedText.length);
+          console.log('First 200 characters:', extractedText.substring(0, 200));
           
-          if (!fullText || fullText.trim().length === 0) {
+          if (!extractedText || extractedText.trim().length === 0) {
             throw new Error('No text found in PDF. The PDF might be image-based or corrupted.');
           }
           
-          resolve(fullText.trim());
+          resolve(extractedText.trim());
         } catch (error) {
           console.error('PDF parsing error:', error);
           reject(new Error('Failed to extract text from PDF: ' + error.message));
