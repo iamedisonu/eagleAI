@@ -33,6 +33,7 @@ import { extractTextFromPDF, analyzeResume, extractJobContext } from '../../serv
 const ResumeReview = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analysisData, setAnalysisData] = useState(null);
+  const [extractedText, setExtractedText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -60,6 +61,9 @@ const ResumeReview = () => {
         throw new Error('No text found in PDF. Please ensure the PDF contains selectable text.');
       }
       
+      // Store extracted text for display
+      setExtractedText(text);
+      
       console.log('Step 2: Analyzing resume with AI...');
       // Analyze resume with AI
       const analysis = await analyzeResume(text);
@@ -80,6 +84,7 @@ const ResumeReview = () => {
   const handleNewUpload = () => {
     setUploadedFile(null);
     setAnalysisData(null);
+    setExtractedText(null);
     setIsAnalyzing(false);
     setError(null);
   };
@@ -87,6 +92,33 @@ const ResumeReview = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
+        {/* Parsed Text Display - Full Width */}
+        {extractedText && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <FileText size={24} className="text-blue-600" />
+                Parsed Text from PDF
+              </h2>
+              <button
+                onClick={() => navigator.clipboard.writeText(extractedText)}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm"
+              >
+                <Copy size={16} />
+                Copy Text
+              </button>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto border border-gray-200">
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                {extractedText}
+              </pre>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Text length: {extractedText.length} characters
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
           {/* Left Column - Resume Review */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
