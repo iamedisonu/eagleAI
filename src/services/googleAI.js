@@ -19,6 +19,7 @@ USAGE:
 */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as pdfjsLib from 'pdfjs-dist';
 
 const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
 
@@ -26,72 +27,75 @@ const API_KEY = 'AIzaSyBoKAyutw0pQYkhtCgWAoQNkdhQKt7XYNI';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
 /**
- * Extract text from PDF file - Mock implementation for testing
+ * Extract text from PDF file using multiple parsing methods
  * @param {File} file - PDF file object
  * @returns {Promise<string>} - Extracted text content
  */
 export const extractTextFromPDF = async (file) => {
-  return new Promise((resolve, reject) => {
+  console.log('PDF file received:', file.name, 'Size:', file.size);
+  
+  try {
+    // Method 1: Try pdf-parse first (more reliable for most PDFs)
     try {
-      console.log('PDF file received:', file.name, 'Size:', file.size);
+      console.log('Attempting PDF parsing with pdf-parse...');
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfParse = (await import('pdf-parse')).default;
+      const data = await pdfParse(arrayBuffer);
       
-      // Mock text extraction for testing purposes
-      // In a real implementation, you would use a proper PDF parsing library
-      const mockResumeText = `
-        John Doe
-        Software Engineer
-        john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe
-        
-        EXPERIENCE
-        
-        Software Engineer | Tech Company Inc. | Jan 2022 - Present
-        • Developed and maintained web applications using React and Node.js
-        • Collaborated with cross-functional teams to deliver high-quality software solutions
-        • Implemented automated testing processes that reduced bug reports by 40%
-        • Led a team of 3 junior developers on a major product redesign project
-        
-        Junior Developer | StartupXYZ | Jun 2020 - Dec 2021
-        • Built responsive web interfaces using modern JavaScript frameworks
-        • Participated in agile development processes and daily standups
-        • Contributed to code reviews and maintained documentation
-        • Worked on database optimization that improved query performance by 25%
-        
-        PROJECTS
-        
-        E-Commerce Platform | Personal Project | 2023
-        • Created a full-stack e-commerce application using MERN stack
-        • Implemented user authentication, payment processing, and inventory management
-        • Deployed on AWS with CI/CD pipeline using GitHub Actions
-        
-        Task Management App | Team Project | 2022
-        • Developed a collaborative task management tool with real-time updates
-        • Used WebSocket technology for live collaboration features
-        • Integrated with third-party APIs for calendar and email notifications
-        
-        SKILLS
-        
-        Programming Languages: JavaScript, Python, Java, TypeScript
-        Frameworks: React, Node.js, Express, Django, Spring Boot
-        Databases: MongoDB, PostgreSQL, MySQL
-        Tools: Git, Docker, AWS, Jenkins, Jira
-        Cloud: AWS (EC2, S3, Lambda), Google Cloud Platform
-      `;
-      
-      console.log('Mock PDF parsing completed successfully');
-      console.log('Mock extracted text length:', mockResumeText.length);
-      console.log('First 200 characters:', mockResumeText.substring(0, 200));
-      
-      // Simulate some processing time
-      setTimeout(() => {
-        resolve(mockResumeText.trim());
-      }, 1000);
-      
-    } catch (error) {
-      console.error('PDF processing error:', error);
-      reject(new Error('Failed to process PDF file: ' + error.message));
+      if (data.text && data.text.trim().length > 0) {
+        console.log('PDF parsing successful with pdf-parse');
+        console.log('Extracted text length:', data.text.length);
+        console.log('First 200 characters:', data.text.substring(0, 200));
+        return data.text.trim();
+      }
+    } catch (pdfParseError) {
+      console.warn('pdf-parse failed, trying pdfjs-dist:', pdfParseError.message);
     }
-  });
+
+    // Method 2: Fallback to pdfjs-dist
+    try {
+      console.log('Attempting PDF parsing with pdfjs-dist...');
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let fullText = '';
+      
+      // Extract text from all pages
+      for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+        const page = await pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map(item => item.str)
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (pageText) {
+          fullText += pageText + '\n';
+        }
+      }
+      
+      if (fullText.trim().length > 0) {
+        console.log('PDF parsing successful with pdfjs-dist');
+        console.log('Extracted text length:', fullText.length);
+        console.log('First 200 characters:', fullText.substring(0, 200));
+        return fullText.trim();
+      }
+    } catch (pdfjsError) {
+      console.warn('pdfjs-dist failed:', pdfjsError.message);
+    }
+
+    // Method 3: Final fallback - return error
+    throw new Error('All PDF parsing methods failed. The PDF might be corrupted, password-protected, or contain only images.');
+    
+  } catch (error) {
+    console.error('PDF processing error:', error);
+    throw new Error('Failed to extract text from PDF: ' + error.message);
+  }
 };
 
 /**
