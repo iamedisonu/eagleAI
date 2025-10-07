@@ -25,19 +25,24 @@ USAGE:
 */
 
 import { useState } from 'react';
-import { FileText, Sparkles, Download, Copy, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Sparkles, Download, Copy, CheckCircle, AlertCircle, Upload, Database, Briefcase } from 'lucide-react';
 import ResumeUpload from './ResumeUpload';
 import ResumeAnalysis from './ResumeAnalysis';
+import MockResumeStorage from './MockResumeStorage';
+import SimpleTest from '../debug/SimpleTest';
 import { extractTextFromPDF, analyzeResume, extractJobContext } from '../../services/googleAI';
 
 const ResumeReview = () => {
+  const [activeTab, setActiveTab] = useState('analysis');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analysisData, setAnalysisData] = useState(null);
   const [extractedText, setExtractedText] = useState(null);
   const [fetchedText, setFetchedText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
-  const [retryStatus, setRetryStatus] = useState(null);
+  
+  // Mock student ID for resume storage
+  const studentId = 'mock-student-id';
 
   const handleFileUpload = async (file) => {
     console.log('=== FILE UPLOAD STARTED ===');
@@ -51,7 +56,6 @@ const ResumeReview = () => {
     setUploadedFile(file);
     setIsAnalyzing(true);
     setError(null);
-    setRetryStatus(null);
     setAnalysisData(null); // Clear previous analysis
     
     try {
@@ -69,7 +73,6 @@ const ResumeReview = () => {
       setFetchedText(extractionResult.fetchedText);
       
       console.log('Step 2: Analyzing resume with AI...');
-      setRetryStatus('Connecting to AI service...');
       
       // Analyze resume with AI using the fetched text
       const analysis = await analyzeResume(extractionResult.fetchedText);
@@ -149,7 +152,6 @@ const ResumeReview = () => {
       setAnalysisData(fallbackAnalysis);
     } finally {
       setIsAnalyzing(false);
-      setRetryStatus(null);
     }
   };
 
@@ -160,98 +162,151 @@ const ResumeReview = () => {
     setFetchedText(null);
     setIsAnalyzing(false);
     setError(null);
-    setRetryStatus(null);
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4">
-
-        {!uploadedFile ? (
-          /* Initial Upload State - Two Column Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-            {/* Left Column - Resume Review */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">Resume Review</h1>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                Currently, the resume review tool will only give feedback on your bullet points for experiences and projects. 
-                This does not serve as a complete resume review, so you should still seek feedback from peers. 
-                Additionally, this tool relies on AI and may not always provide the best feedback, so take it with a grain of salt.
-              </p>
-              <ResumeUpload onFileUpload={handleFileUpload} />
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-brand-maroon p-3 rounded-lg">
+              <FileText className="text-white" size={24} />
             </div>
-
-            {/* Right Column - Instructions */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">How It Works</h1>
-              <div className="text-center py-8">
-                <div className="text-gray-400 mb-3">
-                  <FileText size={40} className="mx-auto" />
-                </div>
-                <p className="text-gray-500">Upload your resume to see AI-powered feedback</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Resume Review & Storage</h1>
+              <p className="text-gray-600 text-sm">
+                AI-powered resume analysis and storage for job matching
+              </p>
             </div>
           </div>
-        ) : (
-          /* After Upload - Full Screen Feedback */
-          <div className="w-full">
-            {/* Top Navigation Bar */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-bold text-gray-900">Resume Analysis Results</h1>
-                  {error ? (
-                    <div className="flex items-center gap-2 text-red-700">
-                      <AlertCircle size={18} />
-                      <span className="font-medium text-sm">{error}</span>
+
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab('analysis')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-semibold transition-all duration-200 ${
+                activeTab === 'analysis'
+                  ? 'bg-white text-brand-maroon shadow-sm'
+                  : 'text-gray-600 hover:text-brand-maroon hover:bg-white/50'
+              }`}
+            >
+              <Sparkles size={18} />
+              AI Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('storage')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-semibold transition-all duration-200 ${
+                activeTab === 'storage'
+                  ? 'bg-white text-brand-maroon shadow-sm'
+                  : 'text-gray-600 hover:text-brand-maroon hover:bg-white/50'
+              }`}
+            >
+              <Database size={18} />
+              Resume Storage
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'analysis' && (
+          <div>
+            {/* Simple Test */}
+            <SimpleTest />
+            
+            {!uploadedFile ? (
+              /* Initial Upload State - Two Column Layout */
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                {/* Left Column - Resume Review */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">AI Resume Analysis</h2>
+                  <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                    Get AI-powered feedback on your resume bullet points for experiences and projects. 
+                    This tool provides detailed scoring and improvement suggestions.
+                  </p>
+                  <ResumeUpload onFileUpload={handleFileUpload} />
+                </div>
+
+                {/* Right Column - Instructions */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">How It Works</h2>
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-3">
+                      <FileText size={40} className="mx-auto" />
                     </div>
-                  ) : isAnalyzing ? (
-                    <div className="flex items-center gap-2 text-blue-700">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span className="font-medium text-sm">Analyzing...</span>
+                    <p className="text-gray-500">Upload your resume to see AI-powered feedback</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* After Upload - Full Screen Feedback */
+              <div className="w-full">
+                {/* Top Navigation Bar */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-bold text-gray-900">Resume Analysis Results</h2>
+                      {error ? (
+                        <div className="flex items-center gap-2 text-red-700">
+                          <AlertCircle size={18} />
+                          <span className="font-medium text-sm">{error}</span>
+                        </div>
+                      ) : isAnalyzing ? (
+                        <div className="flex items-center gap-2 text-blue-700">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          <span className="font-medium text-sm">Analyzing...</span>
+                        </div>
+                      ) : analysisData ? (
+                        <div className="flex items-center gap-2 text-green-700">
+                          <CheckCircle size={18} />
+                          <span className="font-medium text-sm">Analysis Complete</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <FileText size={18} />
+                          <span className="font-medium text-sm">Ready for Analysis</span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleNewUpload}
+                      className="flex items-center gap-2 px-3 py-2 bg-brand-maroon text-white rounded-lg hover:bg-brand-crimson transition-colors duration-200 text-sm"
+                    >
+                      <FileText size={14} />
+                      Upload New Resume
+                    </button>
+                  </div>
+                </div>
+
+                {/* Full Screen Feedback */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  {isAnalyzing ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-maroon mx-auto mb-4"></div>
+                      <p className="text-gray-600 mb-2">Analyzing your resume...</p>
                     </div>
                   ) : analysisData ? (
-                    <div className="flex items-center gap-2 text-green-700">
-                      <CheckCircle size={18} />
-                      <span className="font-medium text-sm">Analysis Complete</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <FileText size={18} />
-                      <span className="font-medium text-sm">Ready for Analysis</span>
-                    </div>
-                  )}
+                    <ResumeAnalysis 
+                      file={uploadedFile}
+                      analysisData={analysisData}
+                      isAnalyzing={isAnalyzing}
+                      onNewUpload={handleNewUpload}
+                    />
+                  ) : null}
                 </div>
-                <button
-                  onClick={handleNewUpload}
-                  className="flex items-center gap-2 px-3 py-2 bg-brand-maroon text-white rounded-lg hover:bg-brand-crimson transition-colors duration-200 text-sm"
-                >
-                  <FileText size={14} />
-                  Upload New Resume
-                </button>
               </div>
-            </div>
-
-            {/* Full Screen Feedback */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              {isAnalyzing ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-maroon mx-auto mb-4"></div>
-                  <p className="text-gray-600 mb-2">Analyzing your resume...</p>
-                  {retryStatus && (
-                    <p className="text-sm text-gray-500">{retryStatus}</p>
-                  )}
-                </div>
-              ) : analysisData ? (
-                <ResumeAnalysis 
-                  file={uploadedFile}
-                  analysisData={analysisData}
-                  isAnalyzing={isAnalyzing}
-                  onNewUpload={handleNewUpload}
-                />
-              ) : null}
-            </div>
+            )}
           </div>
+        )}
+
+        {activeTab === 'storage' && (
+          <MockResumeStorage 
+            userId={studentId} 
+            onResumeUpdate={(resume) => {
+              console.log('Resume updated:', resume);
+            }} 
+          />
         )}
       </div>
     </div>

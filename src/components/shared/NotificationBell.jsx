@@ -39,6 +39,17 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
   const [notifications, setNotifications] = useState([
     {
       id: 1,
+      title: "New Job Match: Software Engineer Intern",
+      message: "We found a 92% match for you at Google. Full-stack development internship with React and Node.js.",
+      type: "job-match",
+      icon: Briefcase,
+      time: "5 minutes ago",
+      read: false,
+      relatedJobId: "job123",
+      matchScore: 92
+    },
+    {
+      id: 2,
       title: "Resume Review Complete",
       message: "Your Software Engineer resume scored 8.2/10",
       type: "resume",
@@ -47,39 +58,32 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
       read: false
     },
     {
-      id: 2,
+      id: 3,
+      title: "New Job Match: Data Science Intern",
+      message: "Microsoft has a 87% match for you. Machine learning and Python experience required.",
+      type: "job-match",
+      icon: Briefcase,
+      time: "1 hour ago",
+      read: false,
+      relatedJobId: "job124",
+      matchScore: 87
+    },
+    {
+      id: 4,
       title: "New Mentor Match",
       message: "Sarah Chen is available for a mentorship session",
       type: "mentorship",
       icon: Users,
-      time: "1 hour ago",
+      time: "2 hours ago",
       read: false
     },
     {
-      id: 3,
+      id: 5,
       title: "Project Update",
       message: "ML Resume Screener project needs your attention",
       type: "projects",
       icon: Briefcase,
       time: "3 hours ago",
-      read: true
-    },
-    {
-      id: 4,
-      title: "Skill Assessment Ready",
-      message: "System Design assessment is now available",
-      type: "skills",
-      icon: Code,
-      time: "1 day ago",
-      read: true
-    },
-    {
-      id: 5,
-      title: "Roadmap Milestone",
-      message: "You've completed 65% of your learning path",
-      type: "roadmap",
-      icon: Brain,
-      time: "2 days ago",
       read: true
     }
   ]);
@@ -88,6 +92,7 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
 
   const getTypeColor = (type) => {
     switch (type) {
+      case 'job-match': return 'text-accent-gold';
       case 'resume': return 'text-brand-maroon';
       case 'mentorship': return 'text-accent-teal';
       case 'projects': return 'text-accent-gold';
@@ -99,6 +104,7 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
 
   const getTypeBg = (type) => {
     switch (type) {
+      case 'job-match': return 'bg-accent-gold/10';
       case 'resume': return 'bg-brand-maroon/10';
       case 'mentorship': return 'bg-accent-teal/10';
       case 'projects': return 'bg-accent-gold/10';
@@ -122,8 +128,18 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
 
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
-    // Here you would navigate to the relevant page
-    console.log(`Navigate to ${notification.type} page`);
+    
+    // Handle different notification types
+    if (notification.type === 'job-match') {
+      // Navigate to job details or career page
+      console.log(`Navigate to job details: ${notification.relatedJobId}`);
+      // You could dispatch an action to set active tab to 'career'
+      // or open a job details modal
+    } else {
+      // Navigate to the relevant page
+      console.log(`Navigate to ${notification.type} page`);
+    }
+    
     onClose();
   };
 

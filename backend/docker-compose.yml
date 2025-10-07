@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: eagleai-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: eagleai-jobs
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - eagleai-network
+
+  # Redis for caching and job queues
+  redis:
+    image: redis:7-alpine
+    container_name: eagleai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eagleai-network
+
+  # EagleAI Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eagleai-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/eagleai-jobs?authSource=admin
+      REDIS_URL: redis://redis:6379
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - eagleai-network
+
+  # Job Scraper Service
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eagleai-scraper
+    restart: unless-stopped
+    command: ["node", "scripts/scraper.js", "--verbose"]
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/eagleai-jobs?authSource=admin
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+    depends_on:
+      - mongodb
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - eagleai-network
+
+  # Resume Matcher Service
+  matcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eagleai-matcher
+    restart: unless-stopped
+    command: ["node", "scripts/matcher.js", "--verbose"]
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/eagleai-jobs?authSource=admin
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+    depends_on:
+      - mongodb
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - eagleai-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: eagleai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - eagleai-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  eagleai-network:
+    driver: bridge
+
