@@ -19,7 +19,7 @@ USAGE:
 ============================================================================
 */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Briefcase, 
   MapPin, 
@@ -31,7 +31,9 @@ import {
   Target,
   CheckCircle,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import notificationService from '../../services/notificationService';
 import JobCard from '../jobs/JobCard';
@@ -45,6 +47,13 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobInsights, setJobInsights] = useState(null);
   const [dataSource, setDataSource] = useState('loading'); // 'real', 'mock', 'loading'
+  const [isRealTime, setIsRealTime] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [newJobsDetected, setNewJobsDetected] = useState(0);
+  const [showNewJobsBanner, setShowNewJobsBanner] = useState(false);
+  const refreshIntervalRef = useRef(null);
+  const wsRef = useRef(null);
 
   // Load matching jobs when component mounts or resume data changes
   useEffect(() => {
@@ -52,6 +61,138 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
       loadMatchingJobs();
     }
   }, [studentId, resumeData]);
+
+  // Real-time updates setup
+  useEffect(() => {
+    // Set up WebSocket connection for real-time updates
+    setupWebSocket();
+    
+    // Set up auto-refresh every 30 seconds
+    if (autoRefreshEnabled) {
+      refreshIntervalRef.current = setInterval(() => {
+        if (dataSource === 'real') {
+          loadMatchingJobs();
+          setLastRefresh(new Date());
+        }
+      }, 30000); // 30 seconds
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [autoRefreshEnabled, dataSource]);
+
+  // Setup WebSocket connection for real-time job updates
+  const setupWebSocket = () => {
+    try {
+      // Connect to WebSocket for real-time updates
+      const ws = new WebSocket('ws://localhost:3001');
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('WebSocket connected for real-time job updates');
+        setIsRealTime(true);
+        
+        // Join student-specific room for job updates
+        ws.send(JSON.stringify({
+          type: 'join-student',
+          studentId: studentId
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'new-job' || data.type === 'job-updated') {
+            console.log('New job update received:', data);
+            
+            // Refresh matching jobs when new jobs are added
+            if (dataSource === 'real') {
+              loadMatchingJobs();
+              setLastRefresh(new Date());
+              
+              // Update new jobs counter and show banner
+              setNewJobsDetected(prev => prev + 1);
+              setShowNewJobsBanner(true);
+              
+              // Auto-hide banner after 5 seconds
+              setTimeout(() => {
+                setShowNewJobsBanner(false);
+              }, 5000);
+              
+              // Show notification for new job
+              if (data.job) {
+                notificationService.addJobMatchNotification({
+                  jobId: data.job._id,
+                  jobTitle: data.job.title,
+                  company: data.job.company,
+                  matchScore: 85, // Default match score for new jobs
+                  description: 'New job opportunity just added!',
+                  applicationUrl: data.job.applicationUrl,
+                  location: data.job.location,
+                  jobType: data.job.jobType,
+                  isRemote: data.job.isRemote,
+                  salaryRange: data.job.salaryRange,
+                  skills: data.job.skills || []
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        setIsRealTime(false);
+        
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => {
+          if (autoRefreshEnabled) {
+            setupWebSocket();
+          }
+        }, 5000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsRealTime(false);
+      };
+
+    } catch (error) {
+      console.error('Failed to setup WebSocket:', error);
+      setIsRealTime(false);
+    }
+  };
+
+  // Toggle auto-refresh
+  const toggleAutoRefresh = () => {
+    setAutoRefreshEnabled(!autoRefreshEnabled);
+    
+    if (!autoRefreshEnabled) {
+      // Enable auto-refresh
+      refreshIntervalRef.current = setInterval(() => {
+        if (dataSource === 'real') {
+          loadMatchingJobs();
+          setLastRefresh(new Date());
+        }
+      }, 30000);
+    } else {
+      // Disable auto-refresh
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    }
+  };
 
   // Helper function to generate basic reasoning for real jobs
   const generateBasicReasoning = (job, resumeData) => {
@@ -100,6 +241,10 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   const loadMatchingJobs = async () => {
     setIsLoading(true);
     setError(null);
+    
+    // Clear new jobs counter when manually refreshing
+    setNewJobsDetected(0);
+    setShowNewJobsBanner(false);
     
     try {
       // First try to get real jobs from the database
@@ -486,11 +631,42 @@ Application Tips:
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Real-time status indicator */}
+            <div className="flex items-center gap-2">
+              {isRealTime ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <Wifi size={14} />
+                  <span className="text-xs font-medium">Live</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-gray-400">
+                  <WifiOff size={14} />
+                  <span className="text-xs font-medium">Offline</span>
+                </div>
+              )}
+            </div>
+
+            {/* Auto-refresh toggle */}
+            <button
+              onClick={toggleAutoRefresh}
+              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors duration-200 ${
+                autoRefreshEnabled
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <Clock size={12} />
+              Auto-refresh
+            </button>
+
+            {/* Last updated time */}
             {lastUpdated && (
               <div className="text-sm text-gray-500">
                 Updated {formatTimeAgo(lastUpdated)}
               </div>
             )}
+
+            {/* Manual refresh button */}
             <button
               onClick={loadMatchingJobs}
               disabled={isLoading}
@@ -501,6 +677,33 @@ Application Tips:
             </button>
           </div>
         </div>
+
+        {/* New Jobs Banner */}
+        {showNewJobsBanner && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-100 p-2 rounded-full">
+                  <Sparkles className="text-green-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-green-800 font-semibold">
+                    {newJobsDetected} New Job{newJobsDetected > 1 ? 's' : ''} Found!
+                  </h3>
+                  <p className="text-green-600 text-sm">
+                    Fresh opportunities have been added to your matches
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNewJobsBanner(false)}
+                className="text-green-400 hover:text-green-600 transition-colors duration-200"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
