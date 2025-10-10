@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setIsGuestMode(false);
         
-        // Create or switch to user profile
+        // Create fresh user profile (always fresh start)
         const userProfile = await createOrGetUserProfile(userData.user);
         if (userProfile) {
           switchProfile(userProfile.id);
@@ -121,44 +121,70 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login function for OC users (legacy - now uses Google OAuth)
-  const login = async (email, password) => {
-    // This is now handled by Google OAuth
-    throw new Error('Please use Google Sign-In instead');
+  // Main login function (simplified for guest mode only)
+  const login = async (userName) => {
+    return switchToGuestMode(userName);
   };
 
-  // Create or get user profile for authenticated user
+  // Clear all user-specific data for fresh start
+  const clearUserData = () => {
+    const keysToRemove = [
+      'eagleAI-resume-data',
+      'eagleAI-job-matches', 
+      'eagleAI-user-preferences',
+      'eagleAI-saved-jobs',
+      'eagleAI-application-history',
+      'eagleAI-skill-assessments',
+      'eagleAI-career-goals',
+      'eagleAI-mentorship-sessions',
+      'eagleAI-notifications',
+      'eagleAI-search-history',
+      'eagleAI-filters',
+      'eagleAI-dashboard-state'
+    ];
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    console.log('All user-specific data cleared for fresh start');
+  };
+
+  // Create fresh user profile for authenticated user
   const createOrGetUserProfile = async (userData) => {
     try {
-      // Check if profile already exists
       const existingProfiles = JSON.parse(localStorage.getItem('eagleAI-profiles') || '[]');
-      let userProfile = existingProfiles.find(p => p.userId === userData.id);
       
-      if (!userProfile) {
-        // Create new profile for authenticated user
-        userProfile = {
-          id: `profile-${userData.id}`,
-          userId: userData.id,
-          name: userData.name,
-          email: userData.email,
-          createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString(),
-          resumeData: null,
-          jobMatches: [],
-          preferences: {
-            jobTypes: ['internship', 'full-time'],
-            locations: [],
-            skills: [],
-            experienceLevel: 'entry'
-          },
-          isAuthenticated: true
-        };
-        
-        // Add to profiles
-        const updatedProfiles = [...existingProfiles, userProfile];
-        localStorage.setItem('eagleAI-profiles', JSON.stringify(updatedProfiles));
-      }
+      // Remove any existing profile for this user to ensure fresh start
+      const filteredProfiles = existingProfiles.filter(p => p.userId !== userData.id);
       
+      // Clear all user-specific data for fresh start
+      clearUserData();
+      
+      // Create fresh profile for authenticated user
+      const userProfile = {
+        id: `profile-${userData.id}`,
+        userId: userData.id,
+        name: userData.name,
+        email: userData.email,
+        createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString(),
+        resumeData: null,
+        jobMatches: [],
+        preferences: {
+          jobTypes: ['internship', 'full-time'],
+          locations: [],
+          skills: [],
+          experienceLevel: 'entry'
+        },
+        isAuthenticated: true
+      };
+      
+      // Add fresh profile to the list
+      const updatedProfiles = [...filteredProfiles, userProfile];
+      localStorage.setItem('eagleAI-profiles', JSON.stringify(updatedProfiles));
+      
+      console.log(`Fresh profile created for user: ${userData.email}`);
       return userProfile;
     } catch (error) {
       console.error('Error creating user profile:', error);
@@ -172,6 +198,9 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     setIsGuestMode(true);
     
+    // Clear user-specific data on logout
+    clearUserData();
+    
     // Switch to guest profile
     const guestProfiles = JSON.parse(localStorage.getItem('eagleAI-profiles') || '[]');
     const guestProfile = guestProfiles.find(p => !p.isAuthenticated);
@@ -181,18 +210,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Switch to guest mode
-  const switchToGuestMode = () => {
+  const switchToGuestMode = (guestName = 'Guest User') => {
     setIsGuestMode(true);
-    setIsAuthenticated(false);
-    setUser(null);
+    setIsAuthenticated(true); // Set to true for guest mode
+    setUser({ name: guestName, email: null, id: 'guest' });
+    
+    // Clear user-specific data when switching to guest mode
+    clearUserData();
     
     // Create or switch to guest profile
     const guestProfiles = JSON.parse(localStorage.getItem('eagleAI-profiles') || '[]');
     let guestProfile = guestProfiles.find(p => !p.isAuthenticated);
     
     if (!guestProfile) {
-      guestProfile = createNewProfile('Guest User');
+      guestProfile = createNewProfile(guestName);
+      if (guestProfile) {
+        switchProfile(guestProfile.id);
+      }
     } else {
+      // Update existing guest profile with new name
+      guestProfile.name = guestName;
+      const profiles = JSON.parse(localStorage.getItem('eagleAI-profiles') || '[]');
+      const profileIndex = profiles.findIndex(p => p.id === guestProfile.id);
+      if (profileIndex !== -1) {
+        profiles[profileIndex] = guestProfile;
+        localStorage.setItem('eagleAI-profiles', JSON.stringify(profiles));
+      }
       switchProfile(guestProfile.id);
     }
   };
@@ -218,6 +261,21 @@ export const AuthProvider = ({ children }) => {
     return isAuthenticated && user && isValidOCEmail(user.email);
   };
 
+  // Check if user has submitted their resume
+  const hasResumeSubmitted = () => {
+    if (!isAuthenticated || !user) return false;
+    
+    // Check if resume data exists in current profile
+    const profiles = JSON.parse(localStorage.getItem('eagleAI-profiles') || '[]');
+    const userProfile = profiles.find(p => p.userId === user.id);
+    
+    // Check if resume data exists and is not null/empty
+    return userProfile && 
+           userProfile.resumeData && 
+           userProfile.resumeData !== null &&
+           Object.keys(userProfile.resumeData).length > 0;
+  };
+
   const value = {
     isAuthenticated,
     user,
@@ -230,6 +288,7 @@ export const AuthProvider = ({ children }) => {
     getUserEmail,
     isOCStudent,
     isValidOCEmail,
+    hasResumeSubmitted,
     handleGoogleCallback
   };
 

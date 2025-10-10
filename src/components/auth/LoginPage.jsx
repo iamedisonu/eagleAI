@@ -38,13 +38,8 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      // User is already logged in, redirect to dashboard
-      window.location.href = '/dashboard';
-    }
-  }, [isAuthenticated]);
+  // Note: Authentication state change will automatically show the main app
+  // No need for manual redirect in a single-page application
 
   // Name validation
   const validateName = (name) => {
@@ -65,8 +60,8 @@ const LoginPage = () => {
 
     try {
       await switchToGuestMode(userName.trim());
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      // The authentication state change will automatically show the main app
+      console.log('Successfully logged in as guest:', userName.trim());
     } catch (error) {
       setError('An error occurred. Please try again.');
       console.error('Login error:', error);
