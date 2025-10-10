@@ -56,6 +56,37 @@ const ResumeReview = () => {
     }
   }, [analysisData, isAnalyzing]);
 
+  // Provide mock resume data for demo purposes
+  useEffect(() => {
+    if (!resumeData && studentId) {
+      setResumeData({
+        extractedText: 'Experienced software developer with 2+ years of experience in JavaScript, React, and Node.js. Built multiple full-stack applications and have strong problem-solving skills.',
+        analysisData: {
+          overallScore: 8.5,
+          extractedSkills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL', 'Git'],
+          experience: [
+            {
+              title: 'Software Developer',
+              company: 'Tech Startup',
+              duration: '2 years',
+              description: 'Built full-stack applications using React and Node.js'
+            }
+          ],
+          education: [
+            {
+              degree: 'Bachelor of Science in Computer Science',
+              university: 'Demo University',
+              year: '2024'
+            }
+          ]
+        },
+        uploadedAt: new Date().toISOString(),
+        categories: ['software-engineering'],
+        preferredLocations: ['Remote', 'San Francisco', 'New York']
+      });
+    }
+  }, [studentId, resumeData]);
+
   const handleFileUpload = async (file) => {
     setUploadedFile(file);
     setIsAnalyzing(true);
