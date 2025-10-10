@@ -80,7 +80,19 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
 
 
   const handleNotificationClick = (notification) => {
-    markAsRead(notification.id);
+    markAsRead(notification._id || notification.id);
+    
+    // Handle special upload notification
+    if (notification._id === 'upload-resume-notification') {
+      // Navigate to resume section
+      const resumeSection = document.querySelector('[data-section="resume"]');
+      if (resumeSection) {
+        resumeSection.scrollIntoView({ behavior: 'smooth' });
+      }
+      onClose();
+      return;
+    }
+    
     handleNotificationNavigation(notification);
     onClose();
   };
@@ -177,6 +189,45 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
               ) : (
                 <div className="divide-y divide-gray-100">
                   {notifications.map((notification) => {
+                    // Handle special upload notification
+                    if (notification._id === 'upload-resume-notification') {
+                      return (
+                        <div
+                          key={notification._id}
+                          onClick={() => handleNotificationClick(notification)}
+                          className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors duration-200 ${
+                            !notification.read ? 'bg-brand-maroon/5' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-brand-maroon/10">
+                              <FileText className="text-brand-maroon" size={16} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-medium text-gray-800 truncate">
+                                  {notification.title}
+                                </h4>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 bg-brand-maroon rounded-full flex-shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                {notification.message}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <Clock size={12} className="text-gray-400" />
+                                <span className="text-xs text-gray-500">
+                                  Just now
+                                </span>
+                                <ArrowRight size={12} className="text-gray-400 ml-auto" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     // Use JobNotificationCard for job-match notifications
                     if (notification.type === 'job-match') {
                       return (

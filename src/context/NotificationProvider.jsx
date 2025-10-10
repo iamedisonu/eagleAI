@@ -21,6 +21,7 @@ USAGE:
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import notificationService from '../services/notificationService';
+import { useAuth } from './AuthProvider';
 
 const NotificationContext = createContext(null);
 
@@ -37,9 +38,10 @@ export const NotificationProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const { hasResumeSubmitted, currentProfile } = useAuth();
 
-  // Mock student ID - in real app, this would come from auth context
-  const studentId = 'mock-student-id';
+  // Get student ID from current profile
+  const studentId = currentProfile?.id || 'mock-student-id';
 
   // Load notifications
   const loadNotifications = useCallback(async () => {
@@ -47,19 +49,64 @@ export const NotificationProvider = ({ children }) => {
     setError(null);
     
     try {
+      // Check if user has uploaded a resume
+      const hasResume = hasResumeSubmitted();
+      
+      if (!hasResume) {
+        // If no resume, show only the "Upload your resume" notification
+        const uploadNotification = {
+          _id: 'upload-resume-notification',
+          title: 'Upload Your Resume',
+          message: 'Upload your resume to unlock personalized job matches and career insights.',
+          type: 'reminder',
+          read: false,
+          createdAt: new Date().toISOString(),
+          priority: 'high',
+          actionRequired: true
+        };
+        setNotifications([uploadNotification]);
+        return;
+      }
+      
+      // If resume exists, fetch regular notifications
       const fetchedNotifications = await notificationService.fetchNotifications(studentId);
       setNotifications(fetchedNotifications);
     } catch (err) {
       setError('Failed to load notifications');
       console.error('Error loading notifications:', err);
+      
+      // Fallback: show upload notification if no resume
+      if (!hasResumeSubmitted()) {
+        const uploadNotification = {
+          _id: 'upload-resume-notification',
+          title: 'Upload Your Resume',
+          message: 'Upload your resume to unlock personalized job matches and career insights.',
+          type: 'reminder',
+          read: false,
+          createdAt: new Date().toISOString(),
+          priority: 'high',
+          actionRequired: true
+        };
+        setNotifications([uploadNotification]);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [studentId]);
+  }, [studentId, hasResumeSubmitted]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId) => {
     try {
+      // Handle special upload notification locally
+      if (notificationId === 'upload-resume-notification') {
+        setNotifications(prev => 
+          prev.map(n => 
+            n._id === notificationId ? { ...n, read: true } : n
+          )
+        );
+        return;
+      }
+      
       await notificationService.markAsRead(notificationId);
       // Local state will be updated via the subscription
     } catch (error) {
@@ -70,12 +117,20 @@ export const NotificationProvider = ({ children }) => {
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
-      await notificationService.markAllAsRead();
-      // Local state will be updated via the subscription
+      // Handle upload notification locally
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, read: true }))
+      );
+      
+      // Only call API if there are real notifications (not just upload notification)
+      const hasRealNotifications = notifications.some(n => n._id !== 'upload-resume-notification');
+      if (hasRealNotifications) {
+        await notificationService.markAllAsRead();
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
-  }, []);
+  }, [notifications]);
 
   // Get unread count
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -90,8 +145,10 @@ export const NotificationProvider = ({ children }) => {
       setNotifications(newNotifications);
     });
 
-    // Connect to WebSocket for real-time updates
-    notificationService.connectWebSocket(studentId);
+    // Connect to WebSocket for real-time updates (only if resume exists)
+    if (hasResumeSubmitted()) {
+      notificationService.connectWebSocket(studentId);
+    }
 
     // Check connection status
     const checkConnection = () => {
@@ -105,7 +162,12 @@ export const NotificationProvider = ({ children }) => {
       notificationService.disconnect();
       clearInterval(interval);
     };
-  }, [loadNotifications, studentId]);
+  }, [loadNotifications, studentId, hasResumeSubmitted]);
+
+  // Reload notifications when resume status changes
+  useEffect(() => {
+    loadNotifications();
+  }, [hasResumeSubmitted, loadNotifications]);
 
   const value = {
     notifications,
