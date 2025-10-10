@@ -134,6 +134,10 @@ const MockResumeStorage = ({ userId, onResumeUpdate }) => {
       setCurrentResume(resumeData);
       setSuccess('Resume uploaded successfully!');
       setUploadedFile(null);
+      
+      // Trigger job matching simulation
+      simulateJobMatching();
+      
       if (onResumeUpdate) {
         onResumeUpdate(resumeData);
       }
@@ -143,6 +147,13 @@ const MockResumeStorage = ({ userId, onResumeUpdate }) => {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const simulateJobMatching = () => {
+    // Simulate job matching process
+    setTimeout(() => {
+      setSuccess('Resume uploaded successfully! Job matching in progress...');
+    }, 2000);
   };
 
   const analyzeResumeHandler = async () => {

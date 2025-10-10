@@ -21,7 +21,7 @@ PROPS:
 ============================================================================
 */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Bell, 
   X, 
@@ -32,61 +32,51 @@ import {
   Brain, 
   Code,
   Clock,
-  ArrowRight
+  ArrowRight,
+  RefreshCw
 } from 'lucide-react';
+import notificationService from '../../services/notificationService';
 
 const NotificationBell = ({ isOpen, onToggle, onClose }) => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New Job Match: Software Engineer Intern",
-      message: "We found a 92% match for you at Google. Full-stack development internship with React and Node.js.",
-      type: "job-match",
-      icon: Briefcase,
-      time: "5 minutes ago",
-      read: false,
-      relatedJobId: "job123",
-      matchScore: 92
-    },
-    {
-      id: 2,
-      title: "Resume Review Complete",
-      message: "Your Software Engineer resume scored 8.2/10",
-      type: "resume",
-      icon: FileText,
-      time: "2 minutes ago",
-      read: false
-    },
-    {
-      id: 3,
-      title: "New Job Match: Data Science Intern",
-      message: "Microsoft has a 87% match for you. Machine learning and Python experience required.",
-      type: "job-match",
-      icon: Briefcase,
-      time: "1 hour ago",
-      read: false,
-      relatedJobId: "job124",
-      matchScore: 87
-    },
-    {
-      id: 4,
-      title: "New Mentor Match",
-      message: "Sarah Chen is available for a mentorship session",
-      type: "mentorship",
-      icon: Users,
-      time: "2 hours ago",
-      read: false
-    },
-    {
-      id: 5,
-      title: "Project Update",
-      message: "ML Resume Screener project needs your attention",
-      type: "projects",
-      icon: Briefcase,
-      time: "3 hours ago",
-      read: true
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Mock student ID - in real app, this would come from auth context
+  const studentId = 'mock-student-id';
+
+  useEffect(() => {
+    // Load initial notifications
+    loadNotifications();
+    
+    // Subscribe to real-time updates
+    const unsubscribe = notificationService.subscribe((newNotifications) => {
+      setNotifications(newNotifications);
+    });
+
+    // Connect to WebSocket for real-time updates
+    notificationService.connectWebSocket(studentId);
+
+    return () => {
+      unsubscribe();
+      notificationService.disconnect();
+    };
+  }, [studentId]);
+
+  const loadNotifications = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const fetchedNotifications = await notificationService.fetchNotifications(studentId);
+      setNotifications(fetchedNotifications);
+    } catch (err) {
+      setError('Failed to load notifications');
+      console.error('Error loading notifications:', err);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -114,16 +104,20 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
     }
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+  const markAsRead = async (id) => {
+    try {
+      await notificationService.markAsRead(id);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, read: true }))
-    );
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   const handleNotificationClick = (notification) => {
@@ -141,6 +135,18 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
     }
     
     onClose();
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'job-match': return Briefcase;
+      case 'resume-analysis': return FileText;
+      case 'mentorship': return Users;
+      case 'projects': return Code;
+      case 'skills': return Brain;
+      case 'roadmap': return Brain;
+      default: return Bell;
+    }
   };
 
   return (
@@ -192,14 +198,29 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
 
             {/* Notifications List */}
             <div className="max-h-96 overflow-y-auto">
-              {notifications.length === 0 ? (
+              {isLoading ? (
                 <div className="p-4 text-center text-gray-500">
-                  No notifications
+                  <RefreshCw className="animate-spin mx-auto mb-2" size={20} />
+                  Loading notifications...
+                </div>
+              ) : error ? (
+                <div className="p-4 text-center text-red-500">
+                  <div className="mb-2">Failed to load notifications</div>
+                  <button
+                    onClick={loadNotifications}
+                    className="text-sm text-brand-maroon hover:text-brand-crimson"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="p-4 text-center text-gray-500">
+                  No notifications yet
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {notifications.map((notification) => {
-                    const Icon = notification.icon;
+                    const Icon = getNotificationIcon(notification.type);
                     return (
                       <div
                         key={notification.id}
@@ -229,6 +250,11 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
                               <span className="text-xs text-gray-500">
                                 {notification.time}
                               </span>
+                              {notification.matchScore && (
+                                <span className="text-xs bg-accent-gold/20 text-accent-gold px-2 py-0.5 rounded-full">
+                                  {notification.matchScore}% match
+                                </span>
+                              )}
                               <ArrowRight size={12} className="text-gray-400 ml-auto" />
                             </div>
                           </div>
