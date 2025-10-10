@@ -42,7 +42,6 @@ import {
   analyzeResume, 
   deleteResume 
 } from '../../services/mockResumeStorage';
-import ResumeDebug from '../debug/ResumeDebug';
 
 const MockResumeStorage = ({ userId, onResumeUpdate }) => {
   const [currentResume, setCurrentResume] = useState(null);
@@ -221,9 +220,6 @@ const MockResumeStorage = ({ userId, onResumeUpdate }) => {
 
   return (
     <div className="space-y-6">
-      {/* Debug Info */}
-      <ResumeDebug />
-      
       {/* Current Resume Status */}
       {currentResume ? (
         <div className="bg-brand-white rounded-xl p-6 shadow-lg border border-gray-200">
