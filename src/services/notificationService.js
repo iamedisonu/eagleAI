@@ -18,8 +18,9 @@ USAGE:
 ============================================================================
 */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
+// API endpoints - in production, these would come from environment variables
+const API_BASE_URL = 'http://localhost:3001';
+const WS_URL = 'ws://localhost:3001';
 
 class NotificationService {
   constructor() {
@@ -46,6 +47,12 @@ class NotificationService {
   connectWebSocket(studentId) {
     if (this.socket) {
       this.socket.close();
+    }
+
+    // Check if WebSocket is supported
+    if (typeof WebSocket === 'undefined') {
+      console.warn('WebSocket not supported in this environment');
+      return;
     }
 
     try {
@@ -100,6 +107,7 @@ class NotificationService {
       };
     } catch (error) {
       console.error('Failed to connect WebSocket:', error);
+      // Don't throw the error, just log it and continue with mock data
     }
   }
 
@@ -189,10 +197,13 @@ class NotificationService {
       this.notifyListeners();
       return this.notifications;
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.warn('Backend not available, using mock notifications:', error.message);
       
       // Return mock data if API fails
-      return this.getMockNotifications();
+      const mockNotifications = this.getMockNotifications();
+      this.notifications = mockNotifications;
+      this.notifyListeners();
+      return mockNotifications;
     }
   }
 
