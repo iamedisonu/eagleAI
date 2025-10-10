@@ -33,7 +33,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
-import { useNotifications } from '../../context/NotificationProvider';
+import notificationService from '../../services/notificationService';
 import JobCard from '../jobs/JobCard';
 
 const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
@@ -44,7 +44,6 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   const [showInsights, setShowInsights] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobInsights, setJobInsights] = useState(null);
-  const { addJobMatchNotification } = useNotifications();
 
   // Load matching jobs when component mounts or resume data changes
   useEffect(() => {
@@ -85,7 +84,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
           // Send notifications for new job matches
           if (data.recommendations && data.recommendations.length > 0) {
             data.recommendations.forEach(job => {
-              addJobMatchNotification({
+              notificationService.addJobMatchNotification({
                 jobId: job._id,
                 jobTitle: job.title,
                 company: job.company,
@@ -195,7 +194,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
 
       // Send notifications for mock job matches
       mockJobs.forEach(job => {
-        addJobMatchNotification({
+        notificationService.addJobMatchNotification({
           jobId: job._id,
           jobTitle: job.title,
           company: job.company,
