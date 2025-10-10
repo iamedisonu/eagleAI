@@ -36,8 +36,10 @@ import {
 } from 'lucide-react';
 import notificationService from '../../services/notificationService';
 import JobCard from '../jobs/JobCard';
+import { useUserProfile } from '../../context/UserProfileProvider';
 
-const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
+const MatchingJobs = ({ onJobMatch }) => {
+  const { currentProfile, updateJobMatches } = useUserProfile();
   const [matchingJobs, setMatchingJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -53,6 +55,10 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   const [showNewJobsBanner, setShowNewJobsBanner] = useState(false);
   const refreshIntervalRef = useRef(null);
   const wsRef = useRef(null);
+
+  // Get profile-specific data
+  const studentId = currentProfile?.id;
+  const resumeData = currentProfile?.resumeData;
 
   // Load matching jobs when component mounts or resume data changes
   useEffect(() => {
@@ -509,6 +515,9 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
       setMatchingJobs(mockJobs);
       setLastUpdated(new Date());
       setDataSource('realistic');
+      
+      // Save job matches to profile
+      updateJobMatches(mockJobs);
 
       // Send notifications for mock job matches
       mockJobs.forEach(job => {

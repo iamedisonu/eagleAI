@@ -32,8 +32,10 @@ import MockResumeStorage from './MockResumeStorage';
 import MatchingJobs from './MatchingJobs';
 import { extractTextFromPDF, analyzeResume, extractJobContext } from '../../services/googleAI';
 import { useNotifications } from '../../context/NotificationProvider';
+import { useUserProfile } from '../../context/UserProfileProvider';
 
 const ResumeReview = () => {
+  const { currentProfile, updateResumeData } = useUserProfile();
   const [activeTab, setActiveTab] = useState('analysis');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analysisData, setAnalysisData] = useState(null);
@@ -41,11 +43,11 @@ const ResumeReview = () => {
   const [fetchedText, setFetchedText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
-  const [resumeData, setResumeData] = useState(null);
   const [jobMatches, setJobMatches] = useState([]);
   
-  // Mock student ID for resume storage
-  const studentId = 'mock-student-id';
+  // Get profile-specific data
+  const studentId = currentProfile?.id;
+  const resumeData = currentProfile?.resumeData;
   const { addNotification } = useNotifications();
 
   // Auto-trigger job matching after resume analysis
@@ -56,10 +58,10 @@ const ResumeReview = () => {
     }
   }, [analysisData, isAnalyzing]);
 
-  // Provide mock resume data for demo purposes
+  // Provide mock resume data for demo purposes if no profile data exists
   useEffect(() => {
-    if (!resumeData && studentId) {
-      setResumeData({
+    if (!resumeData && currentProfile) {
+      const mockResumeData = {
         extractedText: 'Experienced software developer with 2+ years of experience in JavaScript, React, and Node.js. Built multiple full-stack applications and have strong problem-solving skills.',
         analysisData: {
           overallScore: 8.5,
@@ -83,9 +85,10 @@ const ResumeReview = () => {
         uploadedAt: new Date().toISOString(),
         categories: ['software-engineering'],
         preferredLocations: ['Remote', 'San Francisco', 'New York']
-      });
+      };
+      updateResumeData(mockResumeData);
     }
-  }, [studentId, resumeData]);
+  }, [resumeData, currentProfile, updateResumeData]);
 
   const handleFileUpload = async (file) => {
     setUploadedFile(file);
@@ -111,11 +114,12 @@ const ResumeReview = () => {
       // Check if analysis was successful
       if (analysis && analysis.parsedResponse) {
         setAnalysisData(analysis);
-        setResumeData({
+        const resumeData = {
           extractedText,
           analysisData: analysis,
           uploadedAt: new Date().toISOString()
-        });
+        };
+        updateResumeData(resumeData);
         setError(null); // Clear any previous errors
       } else {
         throw new Error('AI analysis returned invalid data. Please try again.');
@@ -181,11 +185,12 @@ const ResumeReview = () => {
       };
       
       setAnalysisData(fallbackAnalysis);
-      setResumeData({
+      const resumeData = {
         extractedText,
         analysisData: fallbackAnalysis,
         uploadedAt: new Date().toISOString()
-      });
+      };
+      updateResumeData(resumeData);
     } finally {
       setIsAnalyzing(false);
     }
@@ -445,8 +450,6 @@ const ResumeReview = () => {
 
         {activeTab === 'matching' && (
           <MatchingJobs 
-            studentId={studentId}
-            resumeData={resumeData}
             onJobMatch={handleJobMatch}
           />
         )}
@@ -456,7 +459,7 @@ const ResumeReview = () => {
             userId={studentId} 
             onResumeUpdate={(resume) => {
               // Resume updated successfully
-              setResumeData(resume);
+              updateResumeData(resume);
             }} 
           />
         )}

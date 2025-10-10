@@ -52,6 +52,7 @@ import { AppProvider } from './context/AppProvider';
 import { EagleMentorProvider } from './context/EagleMentorProvider';
 import { NotificationProvider } from './context/NotificationProvider';
 import { NavigationProvider } from './context/NavigationProvider';
+import { UserProfileProvider } from './context/UserProfileProvider';
 import Dashboard from './components/dashboard/Dashboard';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';
@@ -61,6 +62,7 @@ import Skills from './components/skills/Skills';
 import ResumeReview from './components/resume/ResumeReview';
 import NotificationBell from './components/shared/NotificationBell';
 import UniversalSearch from './components/shared/UniversalSearch';
+import ProfileSwitcher from './components/shared/ProfileSwitcher';
 import FloatingMentorButton from './components/eagle-mentor/FloatingMentorButton';
 import EagleMentorPanel from './components/eagle-mentor/EagleMentorPanel';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -151,10 +153,11 @@ const App = () => {
   };
 
   return (
-    <AppProvider>
-      <EagleMentorProvider>
-        <NotificationProvider>
-          <NavigationProvider>
+    <UserProfileProvider>
+      <AppProvider>
+        <EagleMentorProvider>
+          <NotificationProvider>
+            <NavigationProvider>
             <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-lg">
@@ -171,8 +174,9 @@ const App = () => {
                 </div>
               </div>
 
-              {/* Desktop: Search and Notifications */}
+              {/* Desktop: Profile, Search and Notifications */}
               <div className="hidden md:flex items-center gap-3">
+                <ProfileSwitcher />
                 <UniversalSearch 
                   isOpen={isSearchOpen}
                   onToggle={() => setIsSearchOpen(!isSearchOpen)}
@@ -284,6 +288,7 @@ const App = () => {
         </NotificationProvider>
       </EagleMentorProvider>
     </AppProvider>
+    </UserProfileProvider>
   );
 };
 
