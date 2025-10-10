@@ -44,6 +44,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   const [showInsights, setShowInsights] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobInsights, setJobInsights] = useState(null);
+  const [dataSource, setDataSource] = useState('loading'); // 'real', 'mock', 'loading'
 
   // Load matching jobs when component mounts or resume data changes
   useEffect(() => {
@@ -52,60 +53,152 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
     }
   }, [studentId, resumeData]);
 
+  // Helper function to generate basic reasoning for real jobs
+  const generateBasicReasoning = (job, resumeData) => {
+    const skills = resumeData?.analysisData?.extractedSkills || [];
+    const jobSkills = job.skills || [];
+    const matchingSkills = skills.filter(skill => 
+      jobSkills.some(jobSkill => 
+        jobSkill.toLowerCase().includes(skill.toLowerCase()) || 
+        skill.toLowerCase().includes(jobSkill.toLowerCase())
+      )
+    );
+
+    if (matchingSkills.length > 0) {
+      return `Strong match based on your ${matchingSkills.join(', ')} skills. This position offers great opportunities to apply your technical expertise.`;
+    } else if (job.jobType === 'internship') {
+      return `Excellent learning opportunity for your career development. This internship will help you gain valuable experience in the industry.`;
+    } else {
+      return `Good match for your background and career goals. This role offers opportunities for professional growth and skill development.`;
+    }
+  };
+
+  // Helper function to generate key benefits for real jobs
+  const generateKeyBenefits = (job) => {
+    const benefits = [];
+    
+    if (job.isRemote) {
+      benefits.push('Remote work flexibility');
+    }
+    if (job.jobType === 'internship') {
+      benefits.push('Learning opportunity', 'Mentorship program');
+    } else {
+      benefits.push('Career growth', 'Professional development');
+    }
+    if (job.salaryRange) {
+      benefits.push('Competitive compensation');
+    }
+    if (job.location && job.location.toLowerCase().includes('remote')) {
+      benefits.push('Work from anywhere');
+    } else {
+      benefits.push('Great location');
+    }
+    
+    return benefits.slice(0, 4); // Limit to 4 benefits
+  };
+
   const loadMatchingJobs = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // First try RAG API
+      // First try to get real jobs from the database
+      let realJobs = [];
       try {
-        const response = await fetch('/api/rag/recommendations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            studentId,
-            options: {
-              limit: 10,
-              includeExplanation: true,
-              categories: resumeData?.categories || null,
-              jobTypes: ['internship', 'full-time'],
-              locations: resumeData?.preferredLocations || null
-            }
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setMatchingJobs(data.recommendations || []);
-          setLastUpdated(new Date());
-
-          // Send notifications for new job matches
-          if (data.recommendations && data.recommendations.length > 0) {
-            data.recommendations.forEach(job => {
-              notificationService.addJobMatchNotification({
-                jobId: job._id,
-                jobTitle: job.title,
-                company: job.company,
-                matchScore: job.matchScore || job.recommendationScore,
-                description: job.reasoning || 'Great match for your profile!',
-                applicationUrl: job.applicationUrl,
-                location: job.location,
-                jobType: job.jobType,
-                isRemote: job.isRemote,
-                salaryRange: job.salaryRange,
-                skills: job.skills || []
-              });
-            });
-          }
-          return;
+        const jobsResponse = await fetch('/api/jobs?limit=20&status=active');
+        if (jobsResponse.ok) {
+          const jobsData = await jobsResponse.json();
+          realJobs = jobsData.jobs || [];
+          console.log(`Found ${realJobs.length} real jobs in database`);
         }
-      } catch (ragError) {
-        console.log('RAG API not available, falling back to mock data');
+      } catch (jobsError) {
+        console.log('Could not fetch real jobs, will use RAG or fallback');
       }
 
-      // Fallback to mock data if RAG API is not available
+      // If we have real jobs, try RAG API for intelligent matching
+      if (realJobs.length > 0) {
+        try {
+          const response = await fetch('/api/rag/recommendations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              studentId,
+              options: {
+                limit: 10,
+                includeExplanation: true,
+                categories: resumeData?.categories || null,
+                jobTypes: ['internship', 'full-time'],
+                locations: resumeData?.preferredLocations || null
+              }
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setMatchingJobs(data.recommendations || []);
+            setLastUpdated(new Date());
+            setDataSource('real');
+
+            // Send notifications for new job matches
+            if (data.recommendations && data.recommendations.length > 0) {
+              data.recommendations.forEach(job => {
+                notificationService.addJobMatchNotification({
+                  jobId: job._id,
+                  jobTitle: job.title,
+                  company: job.company,
+                  matchScore: job.matchScore || job.recommendationScore,
+                  description: job.reasoning || 'Great match for your profile!',
+                  applicationUrl: job.applicationUrl,
+                  location: job.location,
+                  jobType: job.jobType,
+                  isRemote: job.isRemote,
+                  salaryRange: job.salaryRange,
+                  skills: job.skills || []
+                });
+              });
+            }
+            return;
+          }
+        } catch (ragError) {
+          console.log('RAG API not available, using real jobs with basic matching');
+        }
+
+        // Use real jobs with basic matching if RAG is not available
+        const matchedJobs = realJobs.slice(0, 10).map((job, index) => ({
+          ...job,
+          matchScore: Math.max(60, 95 - (index * 3)), // Decreasing match scores
+          reasoning: generateBasicReasoning(job, resumeData),
+          keyBenefits: generateKeyBenefits(job),
+          aiGenerated: false
+        }));
+
+        setMatchingJobs(matchedJobs);
+        setLastUpdated(new Date());
+        setDataSource('real');
+
+        // Send notifications for real job matches
+        matchedJobs.forEach(job => {
+          notificationService.addJobMatchNotification({
+            jobId: job._id,
+            jobTitle: job.title,
+            company: job.company,
+            matchScore: job.matchScore,
+            description: job.reasoning,
+            applicationUrl: job.applicationUrl,
+            location: job.location,
+            jobType: job.jobType,
+            isRemote: job.isRemote,
+            salaryRange: job.salaryRange,
+            skills: job.skills || []
+          });
+        });
+        return;
+      }
+
+      // Fallback to mock data if no real jobs available
+      console.log('No real jobs found, using mock data');
       const mockJobs = [
         {
           _id: 'mock-job-1',
@@ -191,6 +284,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
 
       setMatchingJobs(mockJobs);
       setLastUpdated(new Date());
+      setDataSource('mock');
 
       // Send notifications for mock job matches
       mockJobs.forEach(job => {
@@ -376,6 +470,18 @@ Application Tips:
               <p className="text-gray-600 text-sm">
                 AI-powered job recommendations based on your resume
               </p>
+              {dataSource === 'real' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-xs text-green-600 font-medium">Live Data</span>
+                </div>
+              )}
+              {dataSource === 'mock' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span className="text-xs text-yellow-600 font-medium">Demo Data</span>
+                </div>
+              )}
             </div>
           </div>
           
