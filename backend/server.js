@@ -90,6 +90,7 @@ import jobRoutes from './routes/jobs.js';
 import studentRoutes from './routes/students.js';
 import notificationRoutes from './routes/notifications.js';
 import matchingRoutes from './routes/matching.js';
+import ragRoutes from './routes/rag.js';
 
 // Import utilities
 import logger from './utils/logger.js';
@@ -148,6 +149,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/matching', matchingRoutes);
+app.use('/api/rag', ragRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {

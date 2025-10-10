@@ -39,10 +39,18 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
       if (onApply) {
         await onApply(job);
       }
+      
+      // Check if URL is valid before opening
+      if (job.urlStatus && !job.urlStatus.isValid) {
+        alert('This job posting is no longer available. The application link may have expired.');
+        return;
+      }
+      
       // Open application URL in new tab
       window.open(job.applicationUrl, '_blank');
     } catch (error) {
       console.error('Error applying to job:', error);
+      alert('Unable to open application link. Please try again later.');
     } finally {
       setIsApplying(false);
     }
@@ -93,9 +101,21 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
       <div className="p-4 md:p-6 border-b border-gray-100">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1 line-clamp-2">
-              {job.title}
-            </h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 line-clamp-2">
+                {job.title}
+              </h3>
+              {job.isNew && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 animate-pulse">
+                  NEW
+                </span>
+              )}
+              {job.urlStatus && !job.urlStatus.isValid && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                  EXPIRED
+                </span>
+              )}
+            </div>
             <p className="text-brand-maroon font-semibold text-sm md:text-base">
               {job.company}
             </p>
@@ -200,7 +220,7 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleApply}
-            disabled={isApplying || !job.applicationUrl}
+            disabled={isApplying || !job.applicationUrl || (job.urlStatus && !job.urlStatus.isValid)}
             className="flex-1 bg-brand-maroon text-brand-white px-4 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isApplying ? (
@@ -211,7 +231,8 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
             ) : (
               <>
                 <ExternalLink size={16} />
-                {job.applicationUrl ? 'Apply Now' : 'Application Unavailable'}
+                {!job.applicationUrl ? 'Application Unavailable' : 
+                 (job.urlStatus && !job.urlStatus.isValid) ? 'Link Expired' : 'Apply Now'}
               </>
             )}
           </button>

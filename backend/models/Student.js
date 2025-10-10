@@ -227,6 +227,16 @@ const studentSchema = new mongoose.Schema({
     min: 0,
     max: 100,
     default: 0
+  },
+
+  // Vector embeddings for RAG
+  embedding: {
+    type: [Number],
+    default: undefined
+  },
+  embeddingUpdatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
@@ -238,6 +248,7 @@ studentSchema.index({ skills: 1 });
 studentSchema.index({ 'jobPreferences.categories': 1 });
 studentSchema.index({ university: 1, major: 1 });
 studentSchema.index({ isActive: 1, lastLogin: -1 });
+studentSchema.index({ embedding: 1 });
 
 // Pre-save middleware to calculate profile completion
 studentSchema.pre('save', function(next) {

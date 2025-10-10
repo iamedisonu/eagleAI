@@ -111,7 +111,7 @@ class JobScraper {
       await page.setViewport({ width: 1920, height: 1080 });
       
       // Set user agent to avoid detection
-      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
       
       // Navigate to the main page
       await page.goto('https://www.intern-list.com/', { 
@@ -119,51 +119,118 @@ class JobScraper {
         timeout: 30000 
       });
       
-      // Wait for job listings to load
-      await page.waitForSelector('.job-listing, .internship-card, [data-testid="job-card"]', { 
-        timeout: 10000 
-      });
+      // Wait for the page to load and look for job listings
+      await page.waitForTimeout(3000);
       
-      // Get all job links
-      const jobLinks = await page.evaluate(() => {
-        const links = [];
-        const selectors = [
-          'a[href*="/job/"]',
-          'a[href*="/internship/"]',
-          '.job-listing a',
-          '.internship-card a',
-          '[data-testid="job-card"] a'
-        ];
+      // Extract job data directly from the main page since intern-list.com shows jobs in categories
+      const jobData = await page.evaluate(() => {
+        const jobs = [];
         
-        selectors.forEach(selector => {
-          document.querySelectorAll(selector).forEach(link => {
-            const href = link.getAttribute('href');
-            if (href && !links.includes(href)) {
-              links.push(href.startsWith('http') ? href : `https://www.intern-list.com${href}`);
+        // Look for job listings in different sections
+        const jobSections = document.querySelectorAll('section, .category, .job-category');
+        
+        jobSections.forEach(section => {
+          // Look for job cards or listings within each section
+          const jobElements = section.querySelectorAll('a[href*="job"], a[href*="internship"], .job-card, .internship-card, [data-job]');
+          
+          jobElements.forEach(jobElement => {
+            try {
+              // Extract job information
+              const title = jobElement.querySelector('h3, h4, .title, .job-title')?.textContent?.trim() ||
+                           jobElement.textContent?.split('\n')[0]?.trim() ||
+                           'Job Title Not Found';
+              
+              const company = jobElement.querySelector('.company, .company-name, .employer')?.textContent?.trim() ||
+                             jobElement.textContent?.split('\n')[1]?.trim() ||
+                             'Company Not Specified';
+              
+              const location = jobElement.querySelector('.location, .city, .address')?.textContent?.trim() ||
+                              'Location Not Specified';
+              
+              const description = jobElement.querySelector('.description, .summary, .details')?.textContent?.trim() ||
+                                 jobElement.textContent?.substring(0, 200) ||
+                                 'Description not available';
+              
+              const href = jobElement.getAttribute('href');
+              const applicationUrl = href ? (href.startsWith('http') ? href : `https://www.intern-list.com${href}`) : null;
+              
+              // Determine job type based on URL or content
+              const jobType = href?.includes('internship') || title.toLowerCase().includes('intern') ? 'internship' : 'full-time';
+              
+              // Determine category based on section or content
+              let category = 'other';
+              const sectionText = section.textContent?.toLowerCase() || '';
+              const titleText = title.toLowerCase();
+              
+              if (sectionText.includes('software') || titleText.includes('software') || titleText.includes('developer')) {
+                category = 'software-engineering';
+              } else if (sectionText.includes('data') || titleText.includes('data') || titleText.includes('analyst')) {
+                category = 'data-science';
+              } else if (sectionText.includes('marketing') || titleText.includes('marketing')) {
+                category = 'marketing';
+              } else if (sectionText.includes('design') || titleText.includes('design') || titleText.includes('ui') || titleText.includes('ux')) {
+                category = 'design';
+              } else if (sectionText.includes('finance') || titleText.includes('finance') || titleText.includes('accounting')) {
+                category = 'finance';
+              } else if (sectionText.includes('product') || titleText.includes('product')) {
+                category = 'product-management';
+              }
+              
+              // Check if remote
+              const isRemote = titleText.includes('remote') || 
+                              location.toLowerCase().includes('remote') || 
+                              description.toLowerCase().includes('remote');
+              
+              // Extract skills from description
+              const skills = [];
+              const skillKeywords = ['javascript', 'python', 'java', 'react', 'node', 'sql', 'aws', 'docker', 'git'];
+              skillKeywords.forEach(skill => {
+                if (description.toLowerCase().includes(skill)) {
+                  skills.push(skill);
+                }
+              });
+              
+              if (title !== 'Job Title Not Found' && applicationUrl) {
+                jobs.push({
+                  title,
+                  company,
+                  location,
+                  description,
+                  applicationUrl,
+                  jobType,
+                  category,
+                  isRemote,
+                  skills,
+                  postedDate: new Date().toISOString(), // Current date as fallback
+                  requirements: []
+                });
+              }
+            } catch (error) {
+              console.warn('Error extracting job data:', error);
             }
           });
         });
         
-        return links;
+        return jobs;
       });
       
-      logger.info(`Found ${jobLinks.length} job links on intern-list.com`);
+      logger.info(`Found ${jobData.length} jobs on intern-list.com`);
       
-      // Scrape each job individually
-      for (let i = 0; i < jobLinks.length; i++) {
+      // Process each job
+      for (let i = 0; i < jobData.length; i++) {
         try {
-          const jobUrl = jobLinks[i];
-          logger.info(`Scraping job ${i + 1}/${jobLinks.length}: ${jobUrl}`);
+          const job = jobData[i];
+          logger.info(`Processing job ${i + 1}/${jobData.length}: ${job.title} at ${job.company}`);
           
-          await this.scrapeJobFromUrl(page, jobUrl);
+          await this.saveJobToDatabase(job);
           
           // Rate limiting
-          if (i < jobLinks.length - 1) {
+          if (i < jobData.length - 1) {
             await this.delay(this.delayBetweenRequests);
           }
           
         } catch (error) {
-          logger.error(`Error scraping job ${i + 1}:`, error);
+          logger.error(`Error processing job ${i + 1}:`, error);
           this.errorCount++;
         }
       }
@@ -173,6 +240,136 @@ class JobScraper {
     } catch (error) {
       logger.error('Error scraping intern-list.com:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Validate job URL accessibility
+   */
+  async validateJobUrl(url) {
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        timeout: 10000 // 10 second timeout
+      });
+      
+      return {
+        isValid: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      };
+    } catch (error) {
+      logger.warn(`URL validation failed for ${url}:`, error.message);
+      return {
+        isValid: false,
+        status: 0,
+        statusText: error.message
+      };
+    }
+  }
+
+  /**
+   * Save job to database with expiration, "new" label logic, and URL validation
+   */
+  async saveJobToDatabase(jobData) {
+    try {
+      // Validate job URL first
+      logger.info(`Validating URL for job: ${jobData.title}`);
+      const urlValidation = await this.validateJobUrl(jobData.applicationUrl);
+      
+      if (!urlValidation.isValid) {
+        logger.warn(`Skipping job with invalid URL: ${jobData.title} (Status: ${urlValidation.status})`);
+        this.errorCount++;
+        return;
+      }
+      
+      // Create source ID from URL
+      const sourceId = `intern-list-${jobData.applicationUrl.split('/').pop()}`;
+      
+      // Check if job already exists
+      const existingJob = await Job.findOne({ sourceId });
+      if (existingJob) {
+        // Update existing job's URL status
+        if (existingJob.status === 'active' && !urlValidation.isValid) {
+          existingJob.status = 'expired';
+          await existingJob.save();
+          logger.info(`Marked existing job as expired due to invalid URL: ${sourceId}`);
+        }
+        return;
+      }
+      
+      // Parse posted date
+      let parsedPostedDate = new Date();
+      if (jobData.postedDate) {
+        parsedPostedDate = new Date(jobData.postedDate);
+      }
+      
+      // Check if job is expired (older than 30 days or has passed deadline)
+      const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
+      const isExpired = parsedPostedDate < thirtyDaysAgo;
+      
+      if (isExpired) {
+        logger.info(`Skipping expired job: ${jobData.title} (posted: ${parsedPostedDate.toISOString()})`);
+        return;
+      }
+      
+      // Determine if job is "new" (less than 5 days old)
+      const fiveDaysAgo = new Date(Date.now() - (5 * 24 * 60 * 60 * 1000));
+      const isNew = parsedPostedDate > fiveDaysAgo;
+      
+      // Create job document
+      const job = new Job({
+        title: jobData.title,
+        company: jobData.company,
+        location: jobData.location || 'Not specified',
+        description: jobData.description,
+        shortDescription: jobData.description.substring(0, 200) + '...',
+        applicationUrl: jobData.applicationUrl,
+        postedDate: parsedPostedDate,
+        requirements: jobData.requirements || [],
+        skills: jobData.skills || this.extractSkills(jobData.description),
+        categories: [jobData.category],
+        jobType: jobData.jobType,
+        isRemote: jobData.isRemote || false,
+        source: 'intern-list',
+        sourceId,
+        status: 'active',
+        isNew: isNew, // Add "new" flag
+        experienceLevel: this.determineExperienceLevel(jobData.title, jobData.description),
+        urlStatus: {
+          lastChecked: new Date(),
+          isValid: urlValidation.isValid,
+          statusCode: urlValidation.status
+        }
+      });
+      
+      // Save job to database
+      await job.save();
+      this.scrapedCount++;
+      
+      logger.info(`Successfully saved job: ${jobData.title} at ${jobData.company} ${isNew ? '(NEW)' : ''} (URL Status: ${urlValidation.status})`);
+      
+    } catch (error) {
+      logger.error(`Error saving job to database:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Determine experience level based on title and description
+   */
+  determineExperienceLevel(title, description) {
+    const text = `${title} ${description}`.toLowerCase();
+    
+    if (text.includes('senior') || text.includes('lead') || text.includes('principal') || text.includes('5+ years')) {
+      return 'senior';
+    } else if (text.includes('mid') || text.includes('intermediate') || text.includes('2-4 years') || text.includes('3+ years')) {
+      return 'mid';
+    } else {
+      return 'entry';
     }
   }
 

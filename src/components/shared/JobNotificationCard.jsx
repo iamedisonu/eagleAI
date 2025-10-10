@@ -42,6 +42,13 @@ const JobNotificationCard = ({
 }) => {
   const handleApply = (e) => {
     e.stopPropagation();
+    
+    // Check if URL is valid before opening
+    if (notification.urlStatus && !notification.urlStatus.isValid) {
+      alert('This job posting is no longer available. The application link may have expired.');
+      return;
+    }
+    
     if (notification.applicationUrl) {
       window.open(notification.applicationUrl, '_blank');
     }
@@ -98,9 +105,21 @@ const JobNotificationCard = ({
           {/* Header with title and match score */}
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">
-                {notification.title.replace('New Job Match: ', '')}
-              </h4>
+              <div className="flex items-center gap-2 mb-1">
+                <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">
+                  {notification.title.replace('New Job Match: ', '')}
+                </h4>
+                {notification.isNew && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                    NEW
+                  </span>
+                )}
+                {notification.urlStatus && !notification.urlStatus.isValid && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                    EXPIRED
+                  </span>
+                )}
+              </div>
               <p className="text-brand-maroon font-medium text-xs">
                 {notification.company}
               </p>
@@ -178,8 +197,13 @@ const JobNotificationCard = ({
         <div className="flex flex-col gap-1 ml-2">
           <button
             onClick={handleApply}
-            className="p-1.5 text-brand-maroon hover:bg-brand-maroon/10 rounded-lg transition-colors duration-200"
-            title="Apply Now"
+            disabled={notification.urlStatus && !notification.urlStatus.isValid}
+            className={`p-1.5 rounded-lg transition-colors duration-200 ${
+              notification.urlStatus && !notification.urlStatus.isValid
+                ? 'text-red-400 cursor-not-allowed'
+                : 'text-brand-maroon hover:bg-brand-maroon/10'
+            }`}
+            title={notification.urlStatus && !notification.urlStatus.isValid ? 'Link Expired' : 'Apply Now'}
           >
             <ExternalLink size={14} />
           </button>

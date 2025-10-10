@@ -24,12 +24,14 @@ USAGE:
 ============================================================================
 */
 
-import { useState } from 'react';
-import { FileText, Sparkles, Download, Copy, CheckCircle, AlertCircle, Upload, Database, Briefcase } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Sparkles, Download, Copy, CheckCircle, AlertCircle, Upload, Database, Briefcase, Target } from 'lucide-react';
 import ResumeUpload from './ResumeUpload';
 import ResumeAnalysis from './ResumeAnalysis';
 import MockResumeStorage from './MockResumeStorage';
+import MatchingJobs from './MatchingJobs';
 import { extractTextFromPDF, analyzeResume, extractJobContext } from '../../services/googleAI';
+import { useNotifications } from '../../context/NotificationProvider';
 
 const ResumeReview = () => {
   const [activeTab, setActiveTab] = useState('analysis');
@@ -39,9 +41,20 @@ const ResumeReview = () => {
   const [fetchedText, setFetchedText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
+  const [resumeData, setResumeData] = useState(null);
+  const [jobMatches, setJobMatches] = useState([]);
   
   // Mock student ID for resume storage
   const studentId = 'mock-student-id';
+  const { addNotification } = useNotifications();
+
+  // Auto-trigger job matching after resume analysis
+  useEffect(() => {
+    if (analysisData && !isAnalyzing) {
+      triggerJobMatching();
+      updateNotificationCenter();
+    }
+  }, [analysisData, isAnalyzing]);
 
   const handleFileUpload = async (file) => {
     setUploadedFile(file);
@@ -67,6 +80,11 @@ const ResumeReview = () => {
       // Check if analysis was successful
       if (analysis && analysis.parsedResponse) {
         setAnalysisData(analysis);
+        setResumeData({
+          extractedText,
+          analysisData: analysis,
+          uploadedAt: new Date().toISOString()
+        });
         setError(null); // Clear any previous errors
       } else {
         throw new Error('AI analysis returned invalid data. Please try again.');
@@ -132,6 +150,11 @@ const ResumeReview = () => {
       };
       
       setAnalysisData(fallbackAnalysis);
+      setResumeData({
+        extractedText,
+        analysisData: fallbackAnalysis,
+        uploadedAt: new Date().toISOString()
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -144,6 +167,101 @@ const ResumeReview = () => {
     setFetchedText(null);
     setIsAnalyzing(false);
     setError(null);
+  };
+
+  // Trigger automatic job matching after resume analysis
+  const triggerJobMatching = async () => {
+    try {
+      // Update student profile with resume data
+      const profileData = {
+        resumeText: extractedText,
+        skills: analysisData?.extractedSkills || [],
+        experience: analysisData?.experience || [],
+        education: analysisData?.education || [],
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Update student profile in backend
+      await fetch(`/api/students/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      // Generate embeddings for the student
+      await fetch(`/api/rag/embedding/student/${studentId}`, {
+        method: 'POST'
+      });
+
+      // Switch to matching jobs tab automatically
+      setActiveTab('matching');
+      
+      // Add notification about job matching
+      addNotification({
+        id: `job-matching-${Date.now()}`,
+        title: "Job Matching Started",
+        message: "We're finding the best job matches based on your resume analysis.",
+        type: "system",
+        time: "Just now",
+        read: false
+      });
+
+    } catch (error) {
+      console.error('Error triggering job matching:', error);
+    }
+  };
+
+  // Update notification center with resume analysis results
+  const updateNotificationCenter = () => {
+    if (analysisData) {
+      // Add resume analysis completion notification
+      addNotification({
+        id: `resume-analysis-${Date.now()}`,
+        title: "Resume Analysis Complete",
+        message: `Your resume scored ${analysisData.overallScore}/10. ${analysisData.priorityImprovements.length} improvements suggested.`,
+        type: "resume-analysis",
+        time: "Just now",
+        read: false
+      });
+
+      // Add job matching notification
+      addNotification({
+        id: `job-matching-ready-${Date.now()}`,
+        title: "Job Matches Ready",
+        message: "We've found personalized job recommendations based on your resume. Check the Matching Jobs tab!",
+        type: "job-match",
+        time: "Just now",
+        read: false
+      });
+    }
+  };
+
+  // Handle job match interactions
+  const handleJobMatch = (job, action) => {
+    setJobMatches(prev => {
+      const existing = prev.find(match => match._id === job._id);
+      if (existing) {
+        return prev.map(match => 
+          match._id === job._id 
+            ? { ...match, status: action, lastInteraction: new Date() }
+            : match
+        );
+      } else {
+        return [...prev, { ...job, status: action, lastInteraction: new Date() }];
+      }
+    });
+
+    // Add notification for job interaction
+    addNotification({
+      id: `job-${action}-${job._id}-${Date.now()}`,
+      title: `Job ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      message: `You ${action} the ${job.title} position at ${job.company}.`,
+      type: "job-interaction",
+      time: "Just now",
+      read: false
+    });
   };
 
 
@@ -176,6 +294,17 @@ const ResumeReview = () => {
             >
               <Sparkles size={18} />
               AI Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('matching')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-semibold transition-all duration-200 ${
+                activeTab === 'matching'
+                  ? 'bg-white text-brand-maroon shadow-sm'
+                  : 'text-gray-600 hover:text-brand-maroon hover:bg-white/50'
+              }`}
+            >
+              <Target size={18} />
+              Matching Jobs
             </button>
             <button
               onClick={() => setActiveTab('storage')}
@@ -283,11 +412,20 @@ const ResumeReview = () => {
           </div>
         )}
 
+        {activeTab === 'matching' && (
+          <MatchingJobs 
+            studentId={studentId}
+            resumeData={resumeData}
+            onJobMatch={handleJobMatch}
+          />
+        )}
+
         {activeTab === 'storage' && (
           <MockResumeStorage 
             userId={studentId} 
             onResumeUpdate={(resume) => {
               // Resume updated successfully
+              setResumeData(resume);
             }} 
           />
         )}

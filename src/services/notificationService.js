@@ -150,7 +150,8 @@ class NotificationService {
       jobType: data.jobType,
       isRemote: data.isRemote,
       salaryRange: data.salaryRange,
-      skills: data.skills || []
+      skills: data.skills || [],
+      isNew: data.isNew || false
     };
     
     this.addNotification(notification);
@@ -281,23 +282,24 @@ class NotificationService {
   // Get mock notifications for fallback
   getMockNotifications() {
     return [
-      {
-        id: 1,
-        title: "New Job Match: Software Engineer Intern",
-        message: "We found a 92% match for you at Google. Full-stack development internship with React and Node.js.",
-        type: "job-match",
-        time: "5 minutes ago",
-        read: false,
-        relatedJobId: "job-001",
-        matchScore: 92,
-        company: "Google",
-        applicationUrl: "https://careers.google.com/jobs/results/1234567890",
-        location: "Mountain View, CA",
-        jobType: "internship",
-        isRemote: false,
-        salaryRange: { min: 6000, max: 8000 },
-        skills: ["Python", "JavaScript", "React", "Node.js", "SQL", "Git"]
-      },
+        {
+          id: 1,
+          title: "New Job Match: Software Engineer Intern",
+          message: "We found a 92% match for you at Google. Full-stack development internship with React and Node.js.",
+          type: "job-match",
+          time: "5 minutes ago",
+          read: false,
+          relatedJobId: "job-001",
+          matchScore: 92,
+          company: "Google",
+          applicationUrl: "https://careers.google.com/jobs/results/1234567890",
+          location: "Mountain View, CA",
+          jobType: "internship",
+          isRemote: false,
+          salaryRange: { min: 6000, max: 8000 },
+          skills: ["Python", "JavaScript", "React", "Node.js", "SQL", "Git"],
+          isNew: true
+        },
       {
         id: 2,
         title: "Resume Review Complete",

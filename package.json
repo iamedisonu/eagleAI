@@ -67,12 +67,19 @@
     "db:migrate": "cd backend && npm run migrate",
     "db:reset": "cd backend && npm run reset",
     "scrape:jobs": "cd backend && npm run scrape",
+    "scrape:intern-list": "cd backend && npm run scrape:intern-list",
+    "validate:urls": "cd backend && npm run validate-urls",
+    "update:embeddings": "cd backend && npm run update-embeddings",
     "match:resumes": "cd backend && npm run match",
     "health:check": "curl -f http://localhost:5173/health || exit 1",
     "health:api": "curl -f http://localhost:3001/health || exit 1",
     "health:python": "curl -f http://localhost:3001/health || exit 1",
     "test:notifications": "node test-notifications.js",
-    "demo:notifications": "node demo-notifications.js"
+    "demo:notifications": "node demo-notifications.js",
+    "demo:job-scraping": "node demo-job-scraping.js",
+    "demo:url-validation": "node demo-url-validation.js",
+    "demo:rag-system": "node demo-rag-system.js",
+    "demo:resume-matching": "node demo-resume-matching.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -141,6 +141,29 @@ const jobSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isNew: {
+    type: Boolean,
+    default: false
+  },
+  
+  // URL validation tracking
+  urlStatus: {
+    lastChecked: {
+      type: Date,
+      default: Date.now
+    },
+    isValid: {
+      type: Boolean,
+      default: true
+    },
+    statusCode: {
+      type: Number,
+      default: 200
+    },
+    errorMessage: {
+      type: String
+    }
+  },
   
   // Matching metadata
   matchScore: {
@@ -185,6 +208,16 @@ const jobSchema = new mongoose.Schema({
       type: String,
       enum: ['conservative', 'moderate', 'progressive', 'startup']
     }
+  },
+
+  // Vector embeddings for RAG
+  embedding: {
+    type: [Number],
+    default: undefined
+  },
+  embeddingUpdatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
@@ -197,6 +230,8 @@ jobSchema.index({ location: 1 });
 jobSchema.index({ postedDate: -1 });
 jobSchema.index({ status: 1, postedDate: -1 });
 jobSchema.index({ 'matchedStudents.studentId': 1 });
+jobSchema.index({ isNew: 1, status: 1 });
+jobSchema.index({ embedding: 1 });
 
 // Pre-save middleware to update lastUpdated
 jobSchema.pre('save', function(next) {
@@ -259,6 +294,103 @@ jobSchema.statics.findForStudent = function(studentId, limit = 20) {
   })
   .sort({ 'matchedStudents.matchScore': -1 })
   .limit(limit);
+};
+
+// Static method to update "new" status for all jobs
+jobSchema.statics.updateNewStatus = function() {
+  const fiveDaysAgo = new Date(Date.now() - (5 * 24 * 60 * 60 * 1000));
+  
+  return Promise.all([
+    // Mark jobs older than 5 days as not new
+    this.updateMany(
+      { 
+        postedDate: { $lt: fiveDaysAgo },
+        isNew: true 
+      },
+      { isNew: false }
+    ),
+    // Mark jobs newer than 5 days as new
+    this.updateMany(
+      { 
+        postedDate: { $gte: fiveDaysAgo },
+        isNew: false,
+        status: 'active'
+      },
+      { isNew: true }
+    )
+  ]);
+};
+
+// Static method to find new jobs
+jobSchema.statics.findNewJobs = function(limit = 20) {
+  return this.find({ 
+    isNew: true,
+    status: 'active'
+  })
+  .sort({ postedDate: -1 })
+  .limit(limit);
+};
+
+// Static method to validate job URLs
+jobSchema.statics.validateJobUrls = async function() {
+  const jobs = await this.find({ 
+    status: 'active',
+    'urlStatus.lastChecked': { 
+      $lt: new Date(Date.now() - (24 * 60 * 60 * 1000)) // Older than 24 hours
+    }
+  }).limit(50); // Process 50 jobs at a time
+  
+  const results = {
+    checked: 0,
+    valid: 0,
+    invalid: 0,
+    errors: 0
+  };
+  
+  for (const job of jobs) {
+    try {
+      results.checked++;
+      
+      const response = await fetch(job.applicationUrl, {
+        method: 'HEAD',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        timeout: 10000
+      });
+      
+      const isValid = response.ok;
+      
+      job.urlStatus = {
+        lastChecked: new Date(),
+        isValid: isValid,
+        statusCode: response.status,
+        errorMessage: isValid ? null : response.statusText
+      };
+      
+      if (!isValid) {
+        job.status = 'expired';
+        results.invalid++;
+      } else {
+        results.valid++;
+      }
+      
+      await job.save();
+      
+    } catch (error) {
+      results.errors++;
+      job.urlStatus = {
+        lastChecked: new Date(),
+        isValid: false,
+        statusCode: 0,
+        errorMessage: error.message
+      };
+      job.status = 'expired';
+      await job.save();
+    }
+  }
+  
+  return results;
 };
 
 export default mongoose.model('Job', jobSchema);

@@ -8,6 +8,10 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "scrape": "node scripts/scraper.js",
+    "scrape:intern-list": "node scripts/scrapeInternList.js",
+    "update-job-status": "node scripts/updateJobStatus.js",
+    "validate-urls": "node scripts/validateJobUrls.js",
+    "update-embeddings": "node scripts/updateEmbeddings.js",
     "match": "node scripts/matcher.js",
     "seed-notifications": "node scripts/seedNotifications.js"
   },
