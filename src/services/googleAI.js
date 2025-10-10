@@ -415,77 +415,127 @@ export const analyzeResume = async (text) => {
     }
 
     const prompt = `
-You are an expert resume reviewer with over 10 years of experience helping students across all majors land internships and full-time positions. Evaluate this resume using the universal "What, How, Why" framework and provide actionable, specific feedback tailored to the student's field and career goals.
+You are an elite resume reviewer and career strategist with 15+ years of experience helping students and professionals land dream jobs at top companies. You've reviewed over 10,000 resumes and have deep expertise in ATS optimization, industry-specific requirements, and current hiring trends.
 
-IMPORTANT: Today's date is ${new Date().toLocaleDateString('en-US', { 
+CURRENT DATE: ${new Date().toLocaleDateString('en-US', { 
   weekday: 'long', 
   year: 'numeric', 
   month: 'long', 
   day: 'numeric' 
-})}. Use this date to provide accurate feedback about graduation dates, experience timelines, and current industry standards.
+})}
 
-Resume to review: "${text}"
+RESUME TO ANALYZE: "${text}"
 
-Please analyze this resume comprehensively using the following 10 categories and provide detailed feedback:
+ANALYSIS FRAMEWORK:
+Use the comprehensive "STAR + ATS + Industry" methodology to evaluate this resume across 10 critical dimensions:
 
-Category 1: Bullet Point Structure (What / How / Why)
-- WHAT: Each bullet point clearly states the action taken, project completed, or contribution made
-- HOW: Methods, tools, skills, or approaches used are explicitly mentioned
-- WHY: Impact is demonstrated through quantifiable or qualitative results
+1. BULLET POINT STRUCTURE (STAR Method)
+   - Situation: Context and challenge clearly established
+   - Task: Specific responsibilities and objectives outlined
+   - Action: Concrete steps taken with tools/methods mentioned
+   - Result: Quantified impact with metrics and outcomes
+   - ATS Keywords: Industry-relevant terms strategically placed
 
-Category 2: Profile Header & Contact Information
-- Full name, location, professional phone/email, LinkedIn profile
-- Professional appearance and accuracy
+2. PROFILE HEADER & CONTACT INFORMATION
+   - Professional email (not school email for graduates)
+   - LinkedIn profile URL (optimized and complete)
+   - Location (city, state format)
+   - Phone number (formatted consistently)
+   - Optional: Portfolio/website if relevant
 
-Category 3: Education Section
-- Institution, degree, major, graduation date, GPA
-- Academic honors, relevant coursework, study abroad
+3. EDUCATION SECTION
+   - Institution name and location
+   - Degree type, major, and graduation date
+   - GPA (if 3.0+ for recent graduates)
+   - Academic honors, scholarships, Dean's List
+   - Relevant coursework (if space allows)
+   - Study abroad, exchange programs
 
-Category 4: Experience Section (Work, Research, Internships)
-- Organization, location, position, dates
-- 2-4 achievement-oriented bullet points per position
-- Strong action verbs, accomplishments, quantified results
+4. EXPERIENCE SECTION (Work, Internships, Research)
+   - Company/organization name and location
+   - Job title and employment dates
+   - 2-4 achievement-focused bullet points per role
+   - Quantified results with specific metrics
+   - Action verbs in past tense (for completed roles)
+   - Industry-specific terminology and keywords
 
-Category 5: Optional Secondary Sections
-- Leadership, community service, skills, projects, publications
-- Relevance and specificity
+5. SECONDARY SECTIONS (Skills, Projects, Leadership)
+   - Technical skills (programming languages, software, tools)
+   - Soft skills (leadership, communication, teamwork)
+   - Personal projects with measurable outcomes
+   - Leadership roles and volunteer experience
+   - Certifications and professional development
+   - Publications, presentations, or patents
 
-Category 6: Visual Appearance & Formatting
-- Clean, professional layout, consistent formatting
-- Proper length, margins, font, file format
+6. VISUAL APPEARANCE & FORMATTING
+   - Clean, professional layout with consistent formatting
+   - Appropriate length (1 page for students, 1-2 pages for professionals)
+   - Consistent font (Calibri, Arial, or Times New Roman)
+   - Proper margins (0.5-1 inch on all sides)
+   - Clear section headers and bullet point alignment
+   - ATS-friendly format (no tables, graphics, or fancy formatting)
 
-Category 7: Language & Grammar
-- No errors, varied sentence structure, professional tone
-- Appropriate action verbs and tense consistency
+7. LANGUAGE & GRAMMAR
+   - Perfect grammar, spelling, and punctuation
+   - Active voice throughout
+   - Consistent tense usage
+   - Professional tone and vocabulary
+   - No first-person pronouns (I, me, my)
+   - Concise, impactful language
 
-Category 8: Content Quality & Relevance
-- Coherent narrative, logical progression, specificity
-- Transferable skills demonstration
+8. CONTENT QUALITY & RELEVANCE
+   - Coherent narrative that tells a story
+   - Logical progression and flow
+   - Specific, concrete examples
+   - Transferable skills clearly demonstrated
+   - Relevance to target industry/role
+   - Appropriate level of detail
 
-Category 9: Contextualization & Targeting
-- Job alignment, industry appropriateness, keyword usage
+9. ATS OPTIMIZATION & TARGETING
+   - Industry-specific keywords strategically placed
+   - Job posting keywords incorporated naturally
+   - ATS-friendly formatting and structure
+   - Standard section headers
+   - No graphics, tables, or complex formatting
+   - Keyword density appropriate (not over-stuffed)
 
-Category 10: Critical Universal Standards
-- Must include: Header, Education, Experience sections
-- Must avoid: Personal info, references, first-person pronouns
+10. UNIVERSAL STANDARDS & COMPLIANCE
+    - Required sections present (Header, Education, Experience)
+    - No personal information (age, marital status, photo)
+    - No references or "References available upon request"
+    - Professional file name
+    - Consistent date formatting
+    - No gaps in employment without explanation
 
-For each issue identified, provide this exact structure:
+SCORING CRITERIA (1-10 scale):
+- 9-10: Exceptional - Ready for top-tier positions, exceeds industry standards
+- 7-8: Good - Strong foundation with minor improvements needed
+- 5-6: Average - Functional but needs significant enhancement
+- 3-4: Below Average - Major issues that will hurt job prospects
+- 1-2: Poor - Fundamental problems requiring complete overhaul
+
+DETAILED FEEDBACK REQUIREMENTS:
+For each issue identified, provide:
+- Category: Which of the 10 categories this falls under
 - Location: Specific section and bullet point
-- Current Problem: Quote the exact problematic text
-- Why It Matters: Explain the specific impact on the resume
-- Solution: Explain the general principle for improvement
-- Rephrased Example: Show the exact same content rewritten better
+- Current Problem: Exact quote of problematic text
+- Why It Matters: Impact on hiring chances and ATS compatibility
+- Solution: Step-by-step improvement strategy
+- Rephrased Example: Exact rewrite showing the improvement
+- Score: 1-10 rating for this specific issue
 
-Use the 10-Point Scoring System:
-- 9-10: Exceptional/Outstanding
-- 7-8: Good/Above Average
-- 5-6: Average/Acceptable
-- 3-4: Below Average/Needs Improvement
-- 1-2: Poor/Unacceptable
+ENHANCED ANALYSIS FEATURES:
+- Industry benchmarking (compare to similar candidates)
+- ATS compatibility score and recommendations
+- Keyword optimization suggestions
+- Career progression insights
+- Skill gap analysis
+- Interview preparation tips
+- Networking recommendations
 
-IMPORTANT: For any score that is NOT 10/10, you MUST provide specific suggestions on how to improve that particular aspect to reach a perfect score. Include concrete examples and actionable steps.
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with this exact structure:
 
-Return a JSON object with this structure:
 {
   "overallScore": number (1-10),
   "categoryScores": {
@@ -501,34 +551,54 @@ Return a JSON object with this structure:
     "universalStandards": number (1-10)
   },
   "improvementSuggestions": {
-    "bulletPoints": string (only if score < 10),
-    "header": string (only if score < 10),
-    "education": string (only if score < 10),
-    "experience": string (only if score < 10),
-    "secondarySections": string (only if score < 10),
-    "formatting": string (only if score < 10),
-    "language": string (only if score < 10),
-    "contentQuality": string (only if score < 10),
-    "targeting": string (only if score < 10),
-    "universalStandards": string (only if score < 10)
+    "bulletPoints": "Specific action items for bullet point improvement",
+    "header": "Header and contact information improvements",
+    "education": "Education section enhancements",
+    "experience": "Experience section optimizations",
+    "secondarySections": "Secondary sections improvements",
+    "formatting": "Visual and formatting recommendations",
+    "language": "Language and grammar improvements",
+    "contentQuality": "Content quality enhancements",
+    "targeting": "ATS and targeting optimizations",
+    "universalStandards": "Universal standards compliance"
   },
   "detailedFeedback": [
     {
-      "category": string,
-      "location": string,
-      "currentProblem": string,
-      "whyItMatters": string,
-      "solution": string,
-      "rephrasedExample": string,
+      "category": "string",
+      "location": "string",
+      "currentProblem": "string",
+      "whyItMatters": "string",
+      "solution": "string",
+      "rephrasedExample": "string",
       "score": number (1-10)
     }
   ],
-  "strengths": [string],
-  "priorityImprovements": [string],
-  "overallAssessment": string
+  "strengths": ["string array of key strengths"],
+  "priorityImprovements": ["string array of top 3-5 improvements"],
+  "overallAssessment": "Comprehensive 2-3 paragraph assessment with specific next steps",
+  "atsCompatibility": {
+    "score": number (1-10),
+    "issues": ["string array of ATS issues"],
+    "recommendations": ["string array of ATS improvements"]
+  },
+  "industryInsights": {
+    "targetIndustry": "string",
+    "competitiveness": "string",
+    "keywordSuggestions": ["string array"],
+    "skillGaps": ["string array"],
+    "careerPath": "string"
+  }
 }
 
-CRITICAL: You must return ONLY valid JSON. Do not include any text before or after the JSON object.
+CRITICAL REQUIREMENTS:
+1. Return ONLY valid JSON - no markdown, no explanations, no additional text
+2. All scores must be integers between 1-10
+3. Provide specific, actionable feedback for every score below 10
+4. Include exact quotes for current problems
+5. Provide exact rewrites for rephrased examples
+6. Focus on quantifiable improvements and measurable outcomes
+7. Consider current job market trends and ATS requirements
+8. Provide industry-specific insights and recommendations
 `;
 
     console.log('Sending request to Google AI with retry logic...');

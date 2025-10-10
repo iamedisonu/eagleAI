@@ -225,7 +225,11 @@ const ResumeReview = () => {
                     Get AI-powered feedback on your resume bullet points for experiences and projects. 
                     This tool provides detailed scoring and improvement suggestions.
                   </p>
-                  <ResumeUpload onFileUpload={handleFileUpload} />
+                  <ResumeUpload 
+                    onFileUpload={handleFileUpload} 
+                    isAnalyzing={isAnalyzing}
+                    maxFileSize={10}
+                  />
                 </div>
 
                 {/* Right Column - Instructions */}
