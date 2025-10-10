@@ -29,7 +29,6 @@ import { FileText, Sparkles, Download, Copy, CheckCircle, AlertCircle, Upload, D
 import ResumeUpload from './ResumeUpload';
 import ResumeAnalysis from './ResumeAnalysis';
 import MockResumeStorage from './MockResumeStorage';
-import SimpleTest from '../debug/SimpleTest';
 import { extractTextFromPDF, analyzeResume, extractJobContext } from '../../services/googleAI';
 
 const ResumeReview = () => {
@@ -45,24 +44,14 @@ const ResumeReview = () => {
   const studentId = 'mock-student-id';
 
   const handleFileUpload = async (file) => {
-    console.log('=== FILE UPLOAD STARTED ===');
-    console.log('File details:', {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      lastModified: file.lastModified
-    });
-    
     setUploadedFile(file);
     setIsAnalyzing(true);
     setError(null);
     setAnalysisData(null); // Clear previous analysis
     
     try {
-      console.log('Step 1: Extracting text from PDF...');
       // Extract text from PDF
       const extractionResult = await extractTextFromPDF(file);
-      console.log('Step 1 Complete: Extraction result:', extractionResult);
       
       if (!extractionResult || !extractionResult.fetchedText || extractionResult.fetchedText.trim().length === 0) {
         throw new Error('No text found in PDF. Please ensure the PDF contains selectable text.');
@@ -72,24 +61,17 @@ const ResumeReview = () => {
       setExtractedText(extractionResult.originalText);
       setFetchedText(extractionResult.fetchedText);
       
-      console.log('Step 2: Analyzing resume with AI...');
-      
       // Analyze resume with AI using the fetched text
       const analysis = await analyzeResume(extractionResult.fetchedText);
-      console.log('Step 2 Complete: AI analysis completed:', analysis);
       
       // Check if analysis was successful
       if (analysis && analysis.parsedResponse) {
-        console.log('Step 3: Setting analysis data...');
         setAnalysisData(analysis);
         setError(null); // Clear any previous errors
-        console.log('=== FILE UPLOAD COMPLETE ===');
       } else {
         throw new Error('AI analysis returned invalid data. Please try again.');
       }
     } catch (error) {
-      console.error('=== FILE UPLOAD ERROR ===');
-      console.error('Error details:', error);
       
       // Set a more specific error message
       let errorMessage = 'Failed to analyze resume. Please try again.';
@@ -212,9 +194,6 @@ const ResumeReview = () => {
         {/* Tab Content */}
         {activeTab === 'analysis' && (
           <div>
-            {/* Simple Test */}
-            <SimpleTest />
-            
             {!uploadedFile ? (
               /* Initial Upload State - Two Column Layout */
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
@@ -308,7 +287,7 @@ const ResumeReview = () => {
           <MockResumeStorage 
             userId={studentId} 
             onResumeUpdate={(resume) => {
-              console.log('Resume updated:', resume);
+              // Resume updated successfully
             }} 
           />
         )}

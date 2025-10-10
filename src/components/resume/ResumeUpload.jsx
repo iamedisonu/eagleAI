@@ -139,8 +139,6 @@ const ResumeUpload = ({ onFileUpload, isAnalyzing = false, maxFileSize = 10 }) =
     setError('');
     setFileQuality(null);
     
-    console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
-    
     // Analyze file quality
     const quality = analyzeFileQuality(file);
     setFileQuality(quality);
@@ -165,8 +163,6 @@ const ResumeUpload = ({ onFileUpload, isAnalyzing = false, maxFileSize = 10 }) =
     
     setUploadedFileName(file.name);
     setUploadedFile(file);
-    console.log('File ready for upload:', file.name);
-    console.log('File quality analysis:', quality);
   };
 
   const openFileDialog = () => {

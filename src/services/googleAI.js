@@ -284,8 +284,6 @@ const extractTextFromPDFCo = async (file) => {
  * @returns {Promise<string>} - Extracted text content
  */
 export const extractTextFromPDF = async (file) => {
-  console.log('PDF file received:', file.name, 'Size:', file.size);
-  
   try {
     // Validate file
     if (!file || file.type !== 'application/pdf') {
@@ -299,16 +297,11 @@ export const extractTextFromPDF = async (file) => {
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
       throw new Error('File size too large. Please upload a PDF smaller than 10MB.');
     }
-
-    console.log('Attempting PDF parsing with PDF.co API...');
     
     // Use PDF.co API for text extraction
     const extractionResult = await extractTextFromPDFCo(file);
     
     if (extractionResult && extractionResult.fetchedText && extractionResult.fetchedText.trim().length > 0) {
-      console.log('PDF parsing successful with PDF.co!');
-      console.log('Total text length:', extractionResult.fetchedText.length);
-      console.log('First 200 characters:', extractionResult.fetchedText.substring(0, 200));
       return extractionResult;
     } else {
       throw new Error('No text content found in the PDF. The PDF might contain only images or be corrupted.');
@@ -332,10 +325,6 @@ export const extractTextFromPDF = async (file) => {
     } else if (error.message.includes('PDF.co API error')) {
       throw new Error(`PDF parsing service error: ${error.message}`);
     } else {
-      // For debugging, let's see what the actual error is
-      console.log('Actual error details:', error);
-      console.log('Error message:', error.message);
-      console.log('Error stack:', error.stack);
       throw new Error('Failed to extract text from PDF. Please try with a different PDF file or ensure the file is not corrupted.');
     }
   }
