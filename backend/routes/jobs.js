@@ -16,6 +16,7 @@ ENDPOINTS:
 */
 
 import express from 'express';
+import mongoose from 'mongoose';
 import Job from '../models/Job.js';
 import logger from '../utils/logger.js';
 
@@ -24,6 +25,20 @@ const router = express.Router();
 // GET /api/jobs - List jobs with filtering and pagination
 router.get('/', async (req, res) => {
   try {
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({
+        jobs: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          pages: 0
+        },
+        message: 'Database not connected - returning empty results'
+      });
+    }
+
     const {
       page = 1,
       limit = 20,

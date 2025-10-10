@@ -17,7 +17,7 @@ FEATURES:
 */
 
 import puppeteer from 'puppeteer';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import axios from 'axios';
 import Job from '../models/Job.js';
 import logger from '../utils/logger.js';
