@@ -116,11 +116,9 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
         className="relative p-2 rounded-lg text-brand-white hover:bg-brand-white/10 transition-colors duration-200"
       >
         <Bell size={24} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-brand-crimson text-brand-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-            {unreadCount}
-          </span>
-        )}
+        <span className="absolute -top-1 -right-1 bg-brand-crimson text-brand-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+          {unreadCount}
+        </span>
       </button>
 
       {/* Dropdown */}

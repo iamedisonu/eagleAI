@@ -25,7 +25,10 @@ import {
   GraduationCap,
   CheckCircle,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Brain,
+  Briefcase,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 
@@ -82,41 +85,54 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-maroon/5 to-brand-crimson/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-maroon/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-crimson/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-gold/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+
+      <div className="w-full max-w-lg relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-brand-maroon to-brand-crimson rounded-full mb-6 shadow-lg">
-            <GraduationCap className="text-white" size={40} />
+        <div className="text-center mb-12">
+          <div className="relative inline-block mb-8">
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-maroon to-brand-crimson rounded-full blur-lg opacity-75 animate-pulse"></div>
+            <div className="relative inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-brand-maroon to-brand-crimson rounded-full shadow-2xl">
+              <GraduationCap className="text-white" size={48} />
+            </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Welcome to EagleAI</h1>
-          <p className="text-lg text-gray-600">Your AI-powered career intelligence platform</p>
+          <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            EagleAI
+          </h1>
+          <p className="text-xl text-gray-300 mb-2">Your AI-Powered Career Intelligence Platform</p>
+          <p className="text-gray-400">Discover, Learn, and Excel in Your Career Journey</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-10 max-w-md mx-auto">
+        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Get Started</h2>
-            <p className="text-gray-600">Enter your name to begin exploring</p>
+            <h2 className="text-3xl font-bold text-white mb-3">Welcome Aboard!</h2>
+            <p className="text-gray-300 text-lg">Let's start your career journey together</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-8">
             {/* Name Field */}
             <div>
-              <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-3">
-                What's your name?
+              <label htmlFor="userName" className="block text-lg font-medium text-white mb-4">
+                What should we call you?
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <GraduationCap className="h-6 w-6 text-gray-400" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                  <GraduationCap className="h-7 w-7 text-gray-400 group-focus-within:text-brand-maroon transition-colors duration-200" />
                 </div>
                 <input
                   type="text"
                   id="userName"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className={`block w-full pl-12 pr-4 py-4 text-lg border-2 rounded-xl focus:ring-2 focus:ring-brand-maroon focus:border-brand-maroon transition-all duration-200 ${
-                    nameError ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                  className={`block w-full pl-14 pr-6 py-5 text-lg bg-white/10 border-2 rounded-2xl text-white placeholder-gray-400 focus:ring-4 focus:ring-brand-maroon/50 focus:border-brand-maroon transition-all duration-300 backdrop-blur-sm ${
+                    nameError ? 'border-red-400 bg-red-500/10' : 'border-white/30 hover:border-white/50'
                   }`}
                   placeholder="Enter your full name"
                   disabled={isSubmitting}
@@ -124,7 +140,7 @@ const LoginPage = () => {
                 />
               </div>
               {nameError && (
-                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <p className="mt-3 text-sm text-red-300 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
                   {nameError}
                 </p>
@@ -133,9 +149,9 @@ const LoginPage = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="flex items-center gap-3 p-5 bg-red-500/20 border border-red-400/30 rounded-2xl backdrop-blur-sm">
+                <AlertCircle className="h-6 w-6 text-red-300 flex-shrink-0" />
+                <p className="text-sm text-red-200">{error}</p>
               </div>
             )}
 
@@ -143,33 +159,53 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-brand-maroon to-brand-crimson text-white text-lg font-semibold rounded-xl hover:from-brand-crimson hover:to-brand-maroon focus:ring-2 focus:ring-brand-maroon focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+              className="w-full group relative overflow-hidden bg-gradient-to-r from-brand-maroon to-brand-crimson text-white text-xl font-bold py-5 px-8 rounded-2xl hover:from-brand-crimson hover:to-brand-maroon focus:ring-4 focus:ring-brand-maroon/50 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl hover:shadow-brand-maroon/25 transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {isSubmitting ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <ArrowRight className="h-6 w-6" />
-              )}
-              {isSubmitting ? 'Getting Started...' : 'Start Exploring'}
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative flex items-center justify-center gap-3">
+                {isSubmitting ? (
+                  <Loader2 className="h-7 w-7 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-7 w-7 group-hover:translate-x-1 transition-transform duration-200" />
+                )}
+                <span>{isSubmitting ? 'Getting Started...' : 'Start Your Journey'}</span>
+              </div>
             </button>
           </form>
 
-          {/* Welcome Message */}
-          <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
-            <div className="flex items-center gap-3 mb-3">
-              <CheckCircle className="h-6 w-6 text-blue-600" />
-              <h3 className="font-semibold text-blue-900 text-lg">Welcome to EagleAI</h3>
+          {/* Features Preview */}
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Brain className="h-6 w-6 text-blue-300" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">AI Career Guidance</h4>
+              <p className="text-gray-400 text-sm">Personalized insights and recommendations</p>
             </div>
-            <p className="text-sm text-blue-800 leading-relaxed">
-              Discover personalized career insights, explore job opportunities, and get AI-powered guidance to accelerate your professional journey.
-            </p>
+            <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm">
+              <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Briefcase className="h-6 w-6 text-green-300" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">Job Matching</h4>
+              <p className="text-gray-400 text-sm">Find opportunities that fit your skills</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Users className="h-6 w-6 text-purple-300" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">Mentorship</h4>
+              <p className="text-gray-400 text-sm">Connect with industry professionals</p>
+            </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
+        <div className="text-center mt-12">
+          <p className="text-gray-400 text-sm">
             © 2024 EagleAI - Oklahoma Christian University Career Platform
+          </p>
+          <p className="text-gray-500 text-xs mt-2">
+            Empowering students with data-driven career insights
           </p>
         </div>
       </div>
