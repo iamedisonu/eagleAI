@@ -203,6 +203,52 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// GET /api/notifications/student/:studentId - Get notifications for specific student
+router.get('/student/:studentId', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { type, read, limit = 20, page = 1 } = req.query;
+
+    // Build query
+    const query = { studentId };
+    
+    if (type) {
+      query.type = { $in: type.split(',') };
+    }
+    
+    if (read !== undefined) {
+      query.read = read === 'true';
+    }
+
+    // Execute query with pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [notifications, total] = await Promise.all([
+      Notification.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('relatedJobId', 'title company location')
+        .lean(),
+      Notification.countDocuments(query)
+    ]);
+
+    res.json({
+      notifications,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
 // POST /api/notifications/mark-all-read - Mark all notifications as read for a student
 router.post('/mark-all-read', async (req, res) => {
   try {

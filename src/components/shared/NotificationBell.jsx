@@ -21,7 +21,6 @@ PROPS:
 ============================================================================
 */
 
-import { useState, useEffect } from 'react';
 import { 
   Bell, 
   X, 
@@ -35,50 +34,22 @@ import {
   ArrowRight,
   RefreshCw
 } from 'lucide-react';
-import notificationService from '../../services/notificationService';
+import { useNotifications } from '../../context/NotificationProvider';
+import { useNavigation } from '../../context/NavigationProvider';
+import JobNotificationCard from './JobNotificationCard';
 
 const NotificationBell = ({ isOpen, onToggle, onClose }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Mock student ID - in real app, this would come from auth context
-  const studentId = 'mock-student-id';
-
-  useEffect(() => {
-    // Load initial notifications
-    loadNotifications();
-    
-    // Subscribe to real-time updates
-    const unsubscribe = notificationService.subscribe((newNotifications) => {
-      setNotifications(newNotifications);
-    });
-
-    // Connect to WebSocket for real-time updates
-    notificationService.connectWebSocket(studentId);
-
-    return () => {
-      unsubscribe();
-      notificationService.disconnect();
-    };
-  }, [studentId]);
-
-  const loadNotifications = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const fetchedNotifications = await notificationService.fetchNotifications(studentId);
-      setNotifications(fetchedNotifications);
-    } catch (err) {
-      setError('Failed to load notifications');
-      console.error('Error loading notifications:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const { 
+    notifications, 
+    isLoading, 
+    error, 
+    unreadCount, 
+    loadNotifications, 
+    markAsRead, 
+    markAllAsRead 
+  } = useNotifications();
+  
+  const { handleNotificationNavigation } = useNavigation();
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -95,46 +66,34 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
   const getTypeBg = (type) => {
     switch (type) {
       case 'job-match': return 'bg-accent-gold/10';
+      case 'resume-analysis': return 'bg-brand-maroon/10';
       case 'resume': return 'bg-brand-maroon/10';
       case 'mentorship': return 'bg-accent-teal/10';
       case 'projects': return 'bg-accent-gold/10';
       case 'skills': return 'bg-brand-crimson/10';
       case 'roadmap': return 'bg-accent-bluegray/10';
+      case 'system': return 'bg-gray-100';
+      case 'reminder': return 'bg-accent-bluegray/10';
       default: return 'bg-gray-100';
     }
   };
 
-  const markAsRead = async (id) => {
-    try {
-      await notificationService.markAsRead(id);
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      await notificationService.markAllAsRead();
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
 
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
-    
-    // Handle different notification types
-    if (notification.type === 'job-match') {
-      // Navigate to job details or career page
-      console.log(`Navigate to job details: ${notification.relatedJobId}`);
-      // You could dispatch an action to set active tab to 'career'
-      // or open a job details modal
-    } else {
-      // Navigate to the relevant page
-      console.log(`Navigate to ${notification.type} page`);
-    }
-    
+    handleNotificationNavigation(notification);
     onClose();
+  };
+
+  const handleJobApply = (notification) => {
+    if (notification.applicationUrl) {
+      window.open(notification.applicationUrl, '_blank');
+    }
+  };
+
+  const handleJobViewDetails = (notification) => {
+    // Navigate to career page and open job details
+    handleNotificationNavigation(notification);
   };
 
   const getNotificationIcon = (type) => {
@@ -220,6 +179,20 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
               ) : (
                 <div className="divide-y divide-gray-100">
                   {notifications.map((notification) => {
+                    // Use JobNotificationCard for job-match notifications
+                    if (notification.type === 'job-match') {
+                      return (
+                        <JobNotificationCard
+                          key={notification.id}
+                          notification={notification}
+                          onApply={handleJobApply}
+                          onViewDetails={handleJobViewDetails}
+                          onMarkAsRead={markAsRead}
+                        />
+                      );
+                    }
+
+                    // Use regular notification card for other types
                     const Icon = getNotificationIcon(notification.type);
                     return (
                       <div
@@ -250,11 +223,6 @@ const NotificationBell = ({ isOpen, onToggle, onClose }) => {
                               <span className="text-xs text-gray-500">
                                 {notification.time}
                               </span>
-                              {notification.matchScore && (
-                                <span className="text-xs bg-accent-gold/20 text-accent-gold px-2 py-0.5 rounded-full">
-                                  {notification.matchScore}% match
-                                </span>
-                              )}
                               <ArrowRight size={12} className="text-gray-400 ml-auto" />
                             </div>
                           </div>

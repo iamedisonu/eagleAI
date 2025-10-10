@@ -70,14 +70,17 @@
     "match:resumes": "cd backend && npm run match",
     "health:check": "curl -f http://localhost:5173/health || exit 1",
     "health:api": "curl -f http://localhost:3001/health || exit 1",
-    "health:python": "curl -f http://localhost:3001/health || exit 1"
+    "health:python": "curl -f http://localhost:3001/health || exit 1",
+    "test:notifications": "node test-notifications.js",
+    "demo:notifications": "node demo-notifications.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "lucide-react": "^0.263.1",
     "multer": "^2.0.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
@@ -96,6 +99,7 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^15.2.0",
+    "node-fetch": "^3.3.2",
     "postcss": "^8.5.6",
     "prettier": "^3.1.1",
     "tailwindcss": "^3.4.18",

@@ -70,6 +70,7 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'Recently posted';
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now - date);
@@ -79,6 +80,11 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
     return date.toLocaleDateString();
+  };
+
+  const formatSalary = (salaryRange) => {
+    if (!salaryRange) return null;
+    return `$${salaryRange.min?.toLocaleString()} - $${salaryRange.max?.toLocaleString()}`;
   };
 
   return (
@@ -194,7 +200,7 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleApply}
-            disabled={isApplying}
+            disabled={isApplying || !job.applicationUrl}
             className="flex-1 bg-brand-maroon text-brand-white px-4 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isApplying ? (
@@ -205,7 +211,7 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
             ) : (
               <>
                 <ExternalLink size={16} />
-                Apply Now
+                {job.applicationUrl ? 'Apply Now' : 'Application Unavailable'}
               </>
             )}
           </button>
@@ -224,11 +230,14 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center gap-4">
             {job.salaryRange && (
-              <span>
-                ${job.salaryRange.min?.toLocaleString()} - ${job.salaryRange.max?.toLocaleString()}
+              <span className="font-medium text-gray-700">
+                {formatSalary(job.salaryRange)}
               </span>
             )}
             <span className="capitalize">{job.experienceLevel} level</span>
+            {job.isRemote && (
+              <span className="text-accent-teal font-medium">Remote Available</span>
+            )}
           </div>
           
           {job.categories && job.categories.length > 0 && (

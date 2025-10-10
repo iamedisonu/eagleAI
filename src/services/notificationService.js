@@ -20,7 +20,7 @@ USAGE:
 
 // API endpoints - in production, these would come from environment variables
 const API_BASE_URL = 'http://localhost:3001';
-const WS_URL = 'ws://localhost:3001';
+const WS_URL = 'http://localhost:3001';
 
 class NotificationService {
   constructor() {
@@ -43,54 +43,50 @@ class NotificationService {
     this.listeners.forEach(callback => callback(this.notifications));
   }
 
-  // Connect to WebSocket for real-time updates
+  // Connect to Socket.IO for real-time updates
   connectWebSocket(studentId) {
     if (this.socket) {
-      this.socket.close();
+      this.socket.disconnect();
     }
 
-    // Check if WebSocket is supported
-    if (typeof WebSocket === 'undefined') {
-      console.warn('WebSocket not supported in this environment');
+    // Check if Socket.IO is available
+    if (typeof window === 'undefined' || !window.io) {
+      console.warn('Socket.IO not available, using mock data');
       return;
     }
 
     try {
-      this.socket = new WebSocket(`${WS_URL}?studentId=${studentId}`);
+      this.socket = window.io(WS_URL);
       
-      this.socket.onopen = () => {
-        console.log('WebSocket connected for notifications');
+      this.socket.on('connect', () => {
+        console.log('Socket.IO connected for notifications');
         this.isConnected = true;
         
         // Join student room
-        this.socket.send(JSON.stringify({
-          type: 'join-student',
-          studentId: studentId
-        }));
+        this.socket.emit('join-student', studentId);
         
         // Subscribe to job matches
-        this.socket.send(JSON.stringify({
-          type: 'subscribe-job-matches',
-          studentId: studentId
-        }));
-      };
+        this.socket.emit('subscribe-job-matches', studentId);
+      });
 
-      this.socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'notification') {
-            this.addNotification(data.notification);
-          } else if (data.type === 'job-match') {
-            this.addJobMatchNotification(data);
-          }
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
+      this.socket.on('notification', (data) => {
+        this.addNotification(data.notification);
+      });
 
-      this.socket.onclose = () => {
-        console.log('WebSocket disconnected');
+      this.socket.on('job-match', (data) => {
+        this.addJobMatchNotification(data);
+      });
+
+      this.socket.on('notification-read', (data) => {
+        this.updateNotificationReadStatus(data.notificationId, data.readAt);
+      });
+
+      this.socket.on('all-notifications-read', (data) => {
+        this.markAllAsReadLocally();
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('Socket.IO disconnected');
         this.isConnected = false;
         
         // Attempt to reconnect after 5 seconds
@@ -99,22 +95,22 @@ class NotificationService {
             this.connectWebSocket(studentId);
           }
         }, 5000);
-      };
+      });
 
-      this.socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket.IO connection error:', error);
         this.isConnected = false;
-      };
+      });
     } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
+      console.error('Failed to connect Socket.IO:', error);
       // Don't throw the error, just log it and continue with mock data
     }
   }
 
-  // Disconnect WebSocket
+  // Disconnect Socket.IO
   disconnect() {
     if (this.socket) {
-      this.socket.close();
+      this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
     }
@@ -148,7 +144,13 @@ class NotificationService {
       read: false,
       relatedJobId: data.jobId,
       matchScore: data.matchScore,
-      company: data.company
+      company: data.company,
+      applicationUrl: data.applicationUrl,
+      location: data.location,
+      jobType: data.jobType,
+      isRemote: data.isRemote,
+      salaryRange: data.salaryRange,
+      skills: data.skills || []
     };
     
     this.addNotification(notification);
@@ -172,6 +174,24 @@ class NotificationService {
     return notificationDate.toLocaleDateString();
   }
 
+  // Update notification read status locally
+  updateNotificationReadStatus(notificationId, readAt) {
+    this.notifications = this.notifications.map(n => 
+      n.id === notificationId ? { ...n, read: true, readAt: new Date(readAt) } : n
+    );
+    this.notifyListeners();
+  }
+
+  // Mark all notifications as read locally
+  markAllAsReadLocally() {
+    this.notifications = this.notifications.map(n => ({ 
+      ...n, 
+      read: true, 
+      readAt: new Date() 
+    }));
+    this.notifyListeners();
+  }
+
   // Fetch notifications from API
   async fetchNotifications(studentId) {
     try {
@@ -187,7 +207,7 @@ class NotificationService {
       }
 
       const data = await response.json();
-      this.notifications = data.map(notification => ({
+      this.notifications = data.notifications.map(notification => ({
         ...notification,
         id: notification._id || notification.id,
         time: this.formatTime(notification.createdAt || new Date()),
@@ -238,32 +258,23 @@ class NotificationService {
   // Mark all notifications as read
   async markAllAsRead() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notifications/student/mark-all-read`, {
-        method: 'PUT',
+      const response = await fetch(`${API_BASE_URL}/api/notifications/mark-all-read`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ studentId: 'mock-student-id' })
       });
 
       if (response.ok) {
         // Update local state
-        this.notifications = this.notifications.map(n => ({ 
-          ...n, 
-          read: true, 
-          readAt: new Date() 
-        }));
-        this.notifyListeners();
+        this.markAllAsReadLocally();
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       
       // Update local state anyway
-      this.notifications = this.notifications.map(n => ({ 
-        ...n, 
-        read: true, 
-        readAt: new Date() 
-      }));
-      this.notifyListeners();
+      this.markAllAsReadLocally();
     }
   }
 
@@ -277,13 +288,20 @@ class NotificationService {
         type: "job-match",
         time: "5 minutes ago",
         read: false,
-        relatedJobId: "job123",
-        matchScore: 92
+        relatedJobId: "job-001",
+        matchScore: 92,
+        company: "Google",
+        applicationUrl: "https://careers.google.com/jobs/results/1234567890",
+        location: "Mountain View, CA",
+        jobType: "internship",
+        isRemote: false,
+        salaryRange: { min: 6000, max: 8000 },
+        skills: ["Python", "JavaScript", "React", "Node.js", "SQL", "Git"]
       },
       {
         id: 2,
         title: "Resume Review Complete",
-        message: "Your Software Engineer resume scored 8.2/10",
+        message: "Your Software Engineer resume scored 8.2/10. Great technical skills, consider adding more project details.",
         type: "resume-analysis",
         time: "2 minutes ago",
         read: false
@@ -295,8 +313,40 @@ class NotificationService {
         type: "job-match",
         time: "1 hour ago",
         read: false,
-        relatedJobId: "job124",
-        matchScore: 87
+        relatedJobId: "job-002",
+        matchScore: 87,
+        company: "Microsoft",
+        applicationUrl: "https://careers.microsoft.com/us/en/job/1234567890",
+        location: "Seattle, WA",
+        jobType: "internship",
+        isRemote: true,
+        salaryRange: { min: 5500, max: 7500 },
+        skills: ["Python", "R", "SQL", "Machine Learning", "Statistics", "Pandas"]
+      },
+      {
+        id: 4,
+        title: "New Job Match: AI/ML Research Intern",
+        message: "OpenAI has a 95% match for you. Contribute to cutting-edge AI research and develop next-generation AI systems.",
+        type: "job-match",
+        time: "3 hours ago",
+        read: true,
+        relatedJobId: "job-008",
+        matchScore: 95,
+        company: "OpenAI",
+        applicationUrl: "https://openai.com/careers/1234567890",
+        location: "San Francisco, CA",
+        jobType: "internship",
+        isRemote: true,
+        salaryRange: { min: 10000, max: 15000 },
+        skills: ["Python", "TensorFlow", "PyTorch", "Machine Learning", "Deep Learning", "NLP"]
+      },
+      {
+        id: 5,
+        title: "Mentorship Opportunity",
+        message: "Sarah Chen, Senior Software Engineer at Google, is available for mentorship. 94% compatibility match.",
+        type: "mentorship",
+        time: "6 hours ago",
+        read: false
       }
     ];
   }

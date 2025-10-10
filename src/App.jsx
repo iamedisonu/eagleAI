@@ -50,6 +50,8 @@ PERFORMANCE CONSIDERATIONS:
 import { useState } from 'react';
 import { AppProvider } from './context/AppProvider';
 import { EagleMentorProvider } from './context/EagleMentorProvider';
+import { NotificationProvider } from './context/NotificationProvider';
+import { NavigationProvider } from './context/NavigationProvider';
 import Dashboard from './components/dashboard/Dashboard';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';
@@ -151,7 +153,9 @@ const App = () => {
   return (
     <AppProvider>
       <EagleMentorProvider>
-        <div className="min-h-screen bg-brand-nearwhite-1">
+        <NotificationProvider>
+          <NavigationProvider>
+            <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-lg">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -275,7 +279,9 @@ const App = () => {
           <FloatingMentorButton />
           <EagleMentorPanel />
         </ErrorBoundary>
-      </div>
+            </div>
+          </NavigationProvider>
+        </NotificationProvider>
       </EagleMentorProvider>
     </AppProvider>
   );
