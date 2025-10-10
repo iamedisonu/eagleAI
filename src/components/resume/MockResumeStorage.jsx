@@ -61,9 +61,14 @@ const MockResumeStorage = ({ userId, onResumeUpdate }) => {
 
   const loadCurrentResume = async () => {
     setIsLoading(true);
+    setError(null); // Clear any previous errors
     try {
       const resume = await getResume(userId);
       setCurrentResume(resume);
+      // If no resume is found, that's normal - don't show an error
+      if (!resume) {
+        setError(null);
+      }
     } catch (error) {
       console.error('Error loading resume:', error);
       setError(`Failed to load current resume: ${error.message}`);

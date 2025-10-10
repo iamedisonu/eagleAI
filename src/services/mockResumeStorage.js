@@ -97,11 +97,20 @@ export const getResume = async (userId) => {
   await delay(500); // Simulate network delay
   
   const resume = getStoredResume(userId);
-  if (resume) {
-    return {
-      ...resume,
-      fileUrl: URL.createObjectURL(resume.file) // Create blob URL for preview
-    };
+  if (resume && resume.file) {
+    try {
+      return {
+        ...resume,
+        fileUrl: URL.createObjectURL(resume.file) // Create blob URL for preview
+      };
+    } catch (error) {
+      console.error('Error creating object URL:', error);
+      // Return resume without fileUrl if createObjectURL fails
+      return {
+        ...resume,
+        fileUrl: null
+      };
+    }
   }
   
   return null;
