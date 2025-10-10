@@ -31,7 +31,6 @@ import {
   Target,
   CheckCircle,
   AlertCircle,
-  RefreshCw,
   Wifi,
   WifiOff
 } from 'lucide-react';
@@ -49,7 +48,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   const [dataSource, setDataSource] = useState('loading'); // 'real', 'mock', 'loading'
   const [isRealTime, setIsRealTime] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [autoRefreshEnabled] = useState(true); // Always enabled for seamless updates
   const [newJobsDetected, setNewJobsDetected] = useState(0);
   const [showNewJobsBanner, setShowNewJobsBanner] = useState(false);
   const refreshIntervalRef = useRef(null);
@@ -74,7 +73,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
           loadMatchingJobs();
           setLastRefresh(new Date());
         }
-      }, 30000); // 30 seconds
+      }, 15000); // 15 seconds for more frequent updates
     }
 
     // Cleanup on unmount
@@ -173,26 +172,6 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
     }
   };
 
-  // Toggle auto-refresh
-  const toggleAutoRefresh = () => {
-    setAutoRefreshEnabled(!autoRefreshEnabled);
-    
-    if (!autoRefreshEnabled) {
-      // Enable auto-refresh
-      refreshIntervalRef.current = setInterval(() => {
-        if (dataSource === 'real') {
-          loadMatchingJobs();
-          setLastRefresh(new Date());
-        }
-      }, 30000);
-    } else {
-      // Disable auto-refresh
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-        refreshIntervalRef.current = null;
-      }
-    }
-  };
 
   // Helper function to generate basic reasoning for real jobs
   const generateBasicReasoning = (job, resumeData) => {
@@ -740,18 +719,11 @@ Application Tips:
               )}
             </div>
 
-            {/* Auto-refresh toggle */}
-            <button
-              onClick={toggleAutoRefresh}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors duration-200 ${
-                autoRefreshEnabled
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
+            {/* Auto-refresh indicator */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
               <Clock size={12} />
               Auto-refresh
-            </button>
+            </div>
 
             {/* Last updated time */}
             {lastUpdated && (
@@ -760,15 +732,6 @@ Application Tips:
               </div>
             )}
 
-            {/* Manual refresh button */}
-            <button
-              onClick={loadMatchingJobs}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50"
-            >
-              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-              Refresh
-            </button>
           </div>
         </div>
 
