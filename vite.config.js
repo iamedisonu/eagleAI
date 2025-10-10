@@ -26,6 +26,11 @@ export default defineConfig({
     open: true,
     host: true
   },
+  esbuild: {
+    loader: 'jsx',
+    include: /src\/.*\.[jt]sx?$/,
+    exclude: []
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,

@@ -53,7 +53,9 @@ import { EagleMentorProvider } from './context/EagleMentorProvider';
 import { NotificationProvider } from './context/NotificationProvider';
 import { NavigationProvider } from './context/NavigationProvider';
 import { UserProfileProvider } from './context/UserProfileProvider';
-import { AuthProvider } from './context/AuthProvider';
+import { AuthProvider, useAuth } from './context/AuthProvider';
+import LoginPage from './components/auth/LoginPage.jsx';
+import AuthCallback from './components/auth/AuthCallback.jsx';
 import Dashboard from './components/dashboard/Dashboard';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';
@@ -80,9 +82,10 @@ import {
 } from 'lucide-react';
 
 /**
- * Main App Component
+ * Main App Content Component
  * 
- * This is the root component of the EagleAI application that manages:
+ * This component contains the main application UI that is shown after authentication.
+ * It manages:
  * - Global navigation state
  * - Mobile menu visibility
  * - Notification panel state
@@ -91,7 +94,7 @@ import {
  * 
  * @returns {JSX.Element} The complete application UI
  */
-const App = () => {
+const MainApp = () => {
   // Navigation state - tracks which section is currently active
   const [activeTab, setActiveTab] = useState('dashboard');
   
@@ -154,13 +157,7 @@ const App = () => {
   };
 
   return (
-    <UserProfileProvider>
-      <AuthProvider>
-        <AppProvider>
-          <EagleMentorProvider>
-            <NotificationProvider>
-              <NavigationProvider>
-            <div className="min-h-screen bg-brand-nearwhite-1">
+    <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-lg">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -285,13 +282,79 @@ const App = () => {
           <FloatingMentorButton />
           <EagleMentorPanel />
         </ErrorBoundary>
-            </div>
-              </NavigationProvider>
-            </NotificationProvider>
-          </EagleMentorProvider>
-        </AppProvider>
-      </AuthProvider>
-    </UserProfileProvider>
+      </div>
+  );
+};
+
+/**
+ * Main App Component with Authentication
+ * 
+ * This is the root component that handles authentication and renders either
+ * the login page or the main application based on authentication status.
+ * 
+ * @returns {JSX.Element} The complete application with authentication
+ */
+const App = () => {
+  return (
+    <ErrorBoundary>
+      <UserProfileProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </UserProfileProvider>
+    </ErrorBoundary>
+  );
+};
+
+/**
+ * App Content Component
+ * 
+ * This component checks authentication status and renders either the login page
+ * or the main application content.
+ * 
+ * @returns {JSX.Element} Login page or main app content
+ */
+const AppContent = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Check if this is an auth callback
+  const isAuthCallback = window.location.pathname === '/auth/callback' || 
+                        window.location.search.includes('token=') ||
+                        window.location.search.includes('success=');
+
+  // Show auth callback page if this is a callback
+  if (isAuthCallback) {
+    return <AuthCallback />;
+  }
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-brand-maroon/5 to-brand-crimson/5 flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-maroon"></div>
+          <span className="text-lg text-gray-600">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  // Show main app if authenticated
+  return (
+    <AppProvider>
+      <EagleMentorProvider>
+        <NotificationProvider>
+          <NavigationProvider>
+            <MainApp />
+          </NavigationProvider>
+        </NotificationProvider>
+      </EagleMentorProvider>
+    </AppProvider>
   );
 };
 
