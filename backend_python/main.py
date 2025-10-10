@@ -3,16 +3,77 @@
 FILE: backend_python/main.py
 ============================================================================
 PURPOSE:
-  FastAPI backend server for EagleAI job matching and resume storage system.
+  FastAPI backend server for EagleAI resume management and analysis system.
   Provides REST API endpoints with automatic documentation and type safety.
+  This service handles all resume-related operations including upload, storage,
+  analysis, and management.
 
 FEATURES:
-  - FastAPI framework with automatic OpenAPI docs
-  - File upload for resumes with validation
-  - MongoDB integration with Motor (async)
-  - CORS support for React frontend
-  - Type hints and automatic validation
-  - Resume analysis and job matching
+  - FastAPI framework with automatic OpenAPI documentation
+  - File upload for resumes with validation (PDF only, 5MB max)
+  - MongoDB integration with PyMongo for data persistence
+  - CORS support for React frontend integration
+  - Type hints and automatic request/response validation
+  - AI-powered resume analysis and scoring
+  - Secure file storage with cleanup mechanisms
+  - Comprehensive error handling and logging
+
+ARCHITECTURE:
+  - FastAPI application with automatic API documentation
+  - Pydantic models for data validation and serialization
+  - MongoDB for student and resume data storage
+  - Local filesystem for resume file storage
+  - Modular endpoint organization by functionality
+  - Comprehensive error handling with proper HTTP status codes
+
+API ENDPOINTS:
+  - /api/students - Student profile management
+  - /api/students/{id}/resume - Resume upload, download, analysis, deletion
+  - /health - Health check and system status
+  - /docs - Interactive API documentation (Swagger UI)
+  - /redoc - Alternative API documentation (ReDoc)
+
+FILE MANAGEMENT:
+  - Secure file upload with validation
+  - Automatic file naming with timestamps
+  - Old file cleanup on replacement
+  - File size and type validation
+  - Secure file download with proper headers
+
+RESUME ANALYSIS:
+  - Mock AI analysis with 10 category scoring
+  - Overall assessment and recommendations
+  - Strengths and improvement suggestions
+  - Confidence scoring and validation
+  - Analysis result storage in database
+
+SECURITY FEATURES:
+  - File type validation (PDF only)
+  - File size limits (5MB maximum)
+  - Secure filename generation
+  - CORS configuration for frontend access
+  - Input validation and sanitization
+  - Error handling without information leakage
+
+PERFORMANCE CONSIDERATIONS:
+  - Async/await for non-blocking operations
+  - Efficient file I/O operations
+  - Database connection pooling
+  - Proper error handling and logging
+  - Memory-efficient file processing
+
+DEPENDENCIES:
+  - fastapi: Web framework with automatic docs
+  - pymongo: MongoDB driver
+  - python-multipart: File upload support
+  - pydantic: Data validation and serialization
+  - uvicorn: ASGI server for production
+  - python-dotenv: Environment variable management
+
+USAGE:
+  - Development: python run.py
+  - Production: uvicorn main:app --host 0.0.0.0 --port 3001
+  - Docker: docker run -p 3001:3001 eagleai-python-backend
 ============================================================================
 """
 

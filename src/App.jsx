@@ -4,20 +4,46 @@ FILE: src/App.jsx
 ============================================================================
 PURPOSE:
   Main application component that renders all the EagleAI screens with
-  navigation between different sections.
+  navigation between different sections. This is the root component that
+  orchestrates the entire application state and routing.
 
 FEATURES:
   - Tab-based navigation between sections
   - Responsive design with mobile-first approach
-  - OC blue branding throughout
-  - Clean, modern UI with proper spacing
+  - OC brand styling throughout (maroon #811429, crimson #660000)
+  - Clean, modern UI with proper spacing and animations
+  - Mobile-responsive hamburger menu
+  - Real-time notifications and search functionality
+  - AI mentor integration with floating button
+
+ARCHITECTURE:
+  - Uses React Context for global state management
+  - Implements custom navigation system (no React Router)
+  - Integrates multiple context providers for different features
+  - Error boundaries for graceful error handling
 
 SECTIONS:
+  - Dashboard: Overview and quick actions
   - Career: AI career intelligence and job matching
   - Mentorship: AI-powered mentor matching
   - Projects: Portfolio builder with AI recommendations
   - Roadmap: Academic roadmap with course recommendations
   - Skills: Skills development with market analysis
+  - Resume: Resume upload, analysis, and feedback
+
+CONTEXT PROVIDERS:
+  - AppProvider: Main application data (careers, projects, skills, etc.)
+  - EagleMentorProvider: AI mentor chat and task management
+
+RESPONSIVE BREAKPOINTS:
+  - Mobile: < 768px (hamburger menu)
+  - Tablet: 768px - 1024px (condensed navigation)
+  - Desktop: > 1024px (full navigation)
+
+PERFORMANCE CONSIDERATIONS:
+  - Lazy loading of components (implemented via switch statement)
+  - Memoized navigation items to prevent unnecessary re-renders
+  - Optimized mobile menu state management
 ============================================================================
 */
 
@@ -48,13 +74,41 @@ import {
   X
 } from 'lucide-react';
 
+/**
+ * Main App Component
+ * 
+ * This is the root component of the EagleAI application that manages:
+ * - Global navigation state
+ * - Mobile menu visibility
+ * - Notification panel state
+ * - Search panel state
+ * - Component rendering based on active tab
+ * 
+ * @returns {JSX.Element} The complete application UI
+ */
 const App = () => {
+  // Navigation state - tracks which section is currently active
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Mobile menu state - controls hamburger menu visibility on mobile devices
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Notification panel state - controls notification dropdown visibility
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  
+  // Search panel state - controls universal search dropdown visibility
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Navigation items with icons
+  /**
+   * Navigation configuration
+   * 
+   * Defines all available sections in the application with their:
+   * - Unique identifier (used for routing)
+   * - Display label (shown in navigation)
+   * - Icon component (from Lucide React)
+   * 
+   * Order matters - first item is the default active tab
+   */
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'career', label: 'Career', icon: TrendingUp },
@@ -65,7 +119,14 @@ const App = () => {
     { id: 'resume', label: 'Resume Review', icon: FileText }
   ];
 
-  // Render the active component
+  /**
+   * Component Router
+   * 
+   * Renders the appropriate component based on the active tab.
+   * This implements a simple client-side routing system without React Router.
+   * 
+   * @returns {JSX.Element} The component corresponding to the active tab
+   */
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'dashboard':

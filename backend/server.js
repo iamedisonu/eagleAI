@@ -5,14 +5,69 @@ FILE: backend/server.js
 PURPOSE:
   Main Express server for EagleAI job scraping and matching system.
   Provides REST API endpoints for job data, matching, and notifications.
+  This is the primary backend service that handles all job-related operations.
 
 FEATURES:
-  - RESTful API endpoints
-  - WebSocket support for real-time notifications
-  - CORS and security middleware
-  - Rate limiting and request validation
-  - Automated job scraping and matching
-  - Database connection and error handling
+  - RESTful API endpoints for jobs, students, matching, and notifications
+  - WebSocket support for real-time notifications and updates
+  - CORS and security middleware (Helmet, rate limiting)
+  - Automated job scraping from multiple sources (LinkedIn, Indeed, Glassdoor)
+  - AI-powered resume matching algorithm
+  - MongoDB integration with Mongoose ODM
+  - Scheduled tasks using node-cron
+  - Comprehensive error handling and logging
+  - Graceful shutdown handling
+
+ARCHITECTURE:
+  - Express.js framework with middleware stack
+  - Socket.IO for real-time communication
+  - MongoDB for data persistence
+  - Modular route handlers for different API endpoints
+  - Service layer for business logic (JobScraper, ResumeMatcher)
+  - Utility layer for logging and common functions
+
+API ENDPOINTS:
+  - /api/jobs - Job management (CRUD operations)
+  - /api/students - Student profile management
+  - /api/matching - Resume-job matching algorithms
+  - /api/notifications - Real-time notification system
+  - /health - Health check endpoint
+
+WEBSOCKET EVENTS:
+  - join-student - Join student-specific room
+  - subscribe-job-matches - Subscribe to job match notifications
+  - notification - Broadcast notifications to clients
+
+SCHEDULED TASKS:
+  - Hourly: Job scraping from all configured sources
+  - Every 2 hours: Resume matching for all active students
+  - Daily: Cleanup expired notifications
+
+SECURITY FEATURES:
+  - Helmet for security headers
+  - CORS configuration for frontend access
+  - Rate limiting to prevent abuse
+  - Request validation and sanitization
+  - Error handling without information leakage
+
+PERFORMANCE CONSIDERATIONS:
+  - Connection pooling for MongoDB
+  - Efficient job scraping with duplicate detection
+  - Optimized matching algorithms
+  - Proper error handling and logging
+  - Graceful shutdown to prevent data loss
+
+DEPENDENCIES:
+  - express: Web framework
+  - socket.io: Real-time communication
+  - mongoose: MongoDB ODM
+  - cors: Cross-origin resource sharing
+  - helmet: Security middleware
+  - express-rate-limit: Rate limiting
+  - node-cron: Scheduled tasks
+  - winston: Logging
+  - puppeteer: Web scraping
+  - cheerio: HTML parsing
 ============================================================================
 */
 
