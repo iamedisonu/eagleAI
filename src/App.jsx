@@ -154,8 +154,8 @@ const App = () => {
   };
 
   return (
-    <AuthProvider>
-      <UserProfileProvider>
+    <UserProfileProvider>
+      <AuthProvider>
         <AppProvider>
           <EagleMentorProvider>
             <NotificationProvider>
@@ -290,8 +290,8 @@ const App = () => {
             </NotificationProvider>
           </EagleMentorProvider>
         </AppProvider>
-      </UserProfileProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </UserProfileProvider>
   );
 };
 
