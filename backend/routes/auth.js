@@ -19,6 +19,7 @@ USAGE:
 
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import passport from '../config/googleAuth.js';
 import Student from '../models/Student.js';
 import logger from '../utils/logger.js';
 
@@ -228,6 +229,47 @@ router.get('/profile/:userId', async (req, res) => {
       message: 'Internal server error'
     });
   }
+});
+
+// Google OAuth routes
+router.get('/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+  prompt: 'select_account'
+}));
+
+router.get('/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
+  async (req, res) => {
+    try {
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          userId: req.user._id, 
+          email: req.user.email,
+          isOCStudent: true
+        },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Redirect to frontend with token
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/callback?token=${token}&success=true`);
+    } catch (error) {
+      logger.error('Google OAuth callback error:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/login?error=oauth_callback_failed`);
+    }
+  }
+);
+
+// Get Google OAuth URL for frontend
+router.get('/google/url', (req, res) => {
+  const googleAuthUrl = `/api/auth/google`;
+  res.json({
+    success: true,
+    authUrl: googleAuthUrl
+  });
 });
 
 export default router;

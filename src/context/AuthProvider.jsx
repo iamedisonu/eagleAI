@@ -42,8 +42,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const savedAuth = localStorage.getItem('eagleAI-auth');
     const savedUser = localStorage.getItem('eagleAI-user');
+    const savedToken = localStorage.getItem('eagleAI-token');
     
-    if (savedAuth && savedUser) {
+    if (savedAuth && savedUser && savedToken) {
       try {
         const authData = JSON.parse(savedAuth);
         const userData = JSON.parse(savedUser);
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }) => {
         // Clear invalid data
         localStorage.removeItem('eagleAI-auth');
         localStorage.removeItem('eagleAI-user');
+        localStorage.removeItem('eagleAI-token');
       }
     }
     
@@ -72,6 +74,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       localStorage.removeItem('eagleAI-auth');
       localStorage.removeItem('eagleAI-user');
+      localStorage.removeItem('eagleAI-token');
     }
   }, [isAuthenticated, user]);
 
@@ -80,73 +83,48 @@ export const AuthProvider = ({ children }) => {
     return email && email.toLowerCase().endsWith('@eagles.oc.edu');
   };
 
-  // Login function for OC users
-  const login = async (email, password) => {
+  // Handle Google OAuth callback
+  const handleGoogleCallback = async (token) => {
     try {
       setIsLoading(true);
       
-      // Validate email format
-      if (!isValidOCEmail(email)) {
-        throw new Error('Please use your @eagles.oc.edu email address');
-      }
-
-      // For now, we'll simulate authentication
-      // In a real app, this would call your backend API
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      // Verify token with backend
+      const response = await fetch('/api/auth/verify', {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData);
+        setUser(userData.user);
         setIsAuthenticated(true);
         setIsGuestMode(false);
         
         // Create or switch to user profile
-        const userProfile = await createOrGetUserProfile(userData);
+        const userProfile = await createOrGetUserProfile(userData.user);
         if (userProfile) {
           switchProfile(userProfile.id);
         }
         
         return { success: true };
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+        throw new Error('Token verification failed');
       }
     } catch (error) {
-      // If backend is not available, simulate successful login for demo
-      if (error.message.includes('fetch')) {
-        console.log('Backend not available, simulating login for demo');
-        const userData = {
-          id: `user-${Date.now()}`,
-          email: email,
-          name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          role: 'student',
-          institution: 'Oklahoma Christian University',
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        };
-        
-        setUser(userData);
-        setIsAuthenticated(true);
-        setIsGuestMode(false);
-        
-        // Create or switch to user profile
-        const userProfile = await createOrGetUserProfile(userData);
-        if (userProfile) {
-          switchProfile(userProfile.id);
-        }
-        
-        return { success: true };
-      }
+      console.error('Google OAuth callback error:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Login function for OC users (legacy - now uses Google OAuth)
+  const login = async (email, password) => {
+    // This is now handled by Google OAuth
+    throw new Error('Please use Google Sign-In instead');
   };
 
   // Create or get user profile for authenticated user
@@ -251,7 +229,8 @@ export const AuthProvider = ({ children }) => {
     getUserDisplayName,
     getUserEmail,
     isOCStudent,
-    isValidOCEmail
+    isValidOCEmail,
+    handleGoogleCallback
   };
 
   if (isLoading) {

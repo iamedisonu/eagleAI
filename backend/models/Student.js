@@ -37,6 +37,28 @@ const studentSchema = new mongoose.Schema({
       message: 'Please provide a valid email address'
     }
   },
+  // Google OAuth fields
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true // Allows null values but ensures uniqueness when present
+  },
+  firstName: {
+    type: String,
+    trim: true
+  },
+  lastName: {
+    type: String,
+    trim: true
+  },
+  profilePicture: {
+    type: String,
+    trim: true
+  },
+  isGoogleAuthenticated: {
+    type: Boolean,
+    default: false
+  },
   university: {
     type: String,
     trim: true
