@@ -27,9 +27,14 @@ import {
   Users, 
   Clock,
   Briefcase,
-  FileText
+  FileText,
+  LogIn,
+  LogOut,
+  GraduationCap
 } from 'lucide-react';
 import { useUserProfile } from '../../context/UserProfileProvider';
+import { useAuth } from '../../context/AuthProvider';
+import LoginModal from '../auth/LoginModal';
 
 const ProfileSwitcher = () => {
   const {
@@ -40,9 +45,21 @@ const ProfileSwitcher = () => {
     deleteProfile,
     clearAllProfiles
   } = useUserProfile();
+  
+  const {
+    isAuthenticated,
+    user,
+    isGuestMode,
+    logout,
+    switchToGuestMode,
+    getUserDisplayName,
+    getUserEmail,
+    isOCStudent
+  } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleCreateProfile = () => {
     const name = prompt('Enter profile name:', 'Guest User');
@@ -91,12 +108,20 @@ const ProfileSwitcher = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
       >
-        <div className="w-8 h-8 bg-brand-maroon rounded-full flex items-center justify-center">
-          <User size={16} className="text-white" />
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          isOCStudent() ? 'bg-green-600' : isAuthenticated ? 'bg-blue-600' : 'bg-brand-maroon'
+        }`}>
+          {isOCStudent() ? (
+            <GraduationCap size={16} className="text-white" />
+          ) : (
+            <User size={16} className="text-white" />
+          )}
         </div>
         <div className="text-left">
-          <div className="text-sm font-medium text-gray-900">{currentProfile.name}</div>
-          <div className="text-xs text-gray-500">Guest Mode</div>
+          <div className="text-sm font-medium text-gray-900">{getUserDisplayName()}</div>
+          <div className="text-xs text-gray-500">
+            {isOCStudent() ? 'OC Student' : isAuthenticated ? 'Authenticated' : 'Guest Mode'}
+          </div>
         </div>
         <ChevronDown size={16} className="text-gray-400" />
       </button>
@@ -106,12 +131,23 @@ const ProfileSwitcher = () => {
         <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           <div className="p-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-brand-maroon rounded-full flex items-center justify-center">
-                <User size={20} className="text-white" />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                isOCStudent() ? 'bg-green-600' : isAuthenticated ? 'bg-blue-600' : 'bg-brand-maroon'
+              }`}>
+                {isOCStudent() ? (
+                  <GraduationCap size={20} className="text-white" />
+                ) : (
+                  <User size={20} className="text-white" />
+                )}
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">{currentProfile.name}</h3>
-                <p className="text-sm text-gray-500">Guest Profile</p>
+                <h3 className="font-semibold text-gray-900">{getUserDisplayName()}</h3>
+                <p className="text-sm text-gray-500">
+                  {isOCStudent() ? 'OC Student' : isAuthenticated ? 'Authenticated User' : 'Guest Profile'}
+                </p>
+                {getUserEmail() && (
+                  <p className="text-xs text-gray-400">{getUserEmail()}</p>
+                )}
                 <p className="text-xs text-gray-400">
                   Last active: {formatLastActive(currentProfile.lastActive)}
                 </p>
@@ -200,27 +236,71 @@ const ProfileSwitcher = () => {
 
           {/* Actions */}
           <div className="p-4 border-t border-gray-100 space-y-2">
-            <button
-              onClick={handleCreateProfile}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-            >
-              <Plus size={16} />
-              Create New Profile
-            </button>
-            
-            {profiles.length > 1 && (
+            {/* Authentication Actions */}
+            {!isAuthenticated ? (
               <button
                 onClick={() => {
-                  if (confirm('Clear all profiles and start fresh? This will delete all profile data.')) {
-                    clearAllProfiles();
-                    setIsOpen(false);
-                  }
+                  setShowLoginModal(true);
+                  setIsOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-maroon hover:bg-brand-maroon/10 rounded-lg transition-colors duration-200 font-medium"
+              >
+                <LogIn size={16} />
+                Sign In with OC Email
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  logout();
+                  setIsOpen(false);
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
               >
-                <Trash2 size={16} />
-                Clear All Profiles
+                <LogOut size={16} />
+                Sign Out
               </button>
+            )}
+
+            {/* Guest Mode Actions */}
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  switchToGuestMode();
+                  setIsOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              >
+                <User size={16} />
+                Switch to Guest Mode
+              </button>
+            )}
+
+            {/* Profile Management */}
+            {isGuestMode && (
+              <>
+                <button
+                  onClick={handleCreateProfile}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                >
+                  <Plus size={16} />
+                  Create New Profile
+                </button>
+                
+                {profiles.length > 1 && (
+                  <button
+                    onClick={() => {
+                      if (confirm('Clear all profiles and start fresh? This will delete all profile data.')) {
+                        clearAllProfiles();
+                        setIsOpen(false);
+                      }
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                  >
+                    <Trash2 size={16} />
+                    Clear All Profiles
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -256,6 +336,12 @@ const ProfileSwitcher = () => {
           </div>
         </div>
       )}
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 };

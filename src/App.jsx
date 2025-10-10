@@ -53,6 +53,7 @@ import { EagleMentorProvider } from './context/EagleMentorProvider';
 import { NotificationProvider } from './context/NotificationProvider';
 import { NavigationProvider } from './context/NavigationProvider';
 import { UserProfileProvider } from './context/UserProfileProvider';
+import { AuthProvider } from './context/AuthProvider';
 import Dashboard from './components/dashboard/Dashboard';
 import Career from './components/career/Career';
 import Mentorship from './components/mentorship/Mentorship';
@@ -153,11 +154,12 @@ const App = () => {
   };
 
   return (
-    <UserProfileProvider>
-      <AppProvider>
-        <EagleMentorProvider>
-          <NotificationProvider>
-            <NavigationProvider>
+    <AuthProvider>
+      <UserProfileProvider>
+        <AppProvider>
+          <EagleMentorProvider>
+            <NotificationProvider>
+              <NavigationProvider>
             <div className="min-h-screen bg-brand-nearwhite-1">
         {/* Header */}
             <header className="bg-brand-maroon text-brand-white shadow-lg">
@@ -284,11 +286,12 @@ const App = () => {
           <EagleMentorPanel />
         </ErrorBoundary>
             </div>
-          </NavigationProvider>
-        </NotificationProvider>
-      </EagleMentorProvider>
-    </AppProvider>
-    </UserProfileProvider>
+              </NavigationProvider>
+            </NotificationProvider>
+          </EagleMentorProvider>
+        </AppProvider>
+      </UserProfileProvider>
+    </AuthProvider>
   );
 };
 

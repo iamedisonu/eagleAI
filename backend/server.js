@@ -91,6 +91,7 @@ import studentRoutes from './routes/students.js';
 import notificationRoutes from './routes/notifications.js';
 import matchingRoutes from './routes/matching.js';
 import ragRoutes from './routes/rag.js';
+import authRoutes from './routes/auth.js';
 
 // Import utilities
 import logger from './utils/logger.js';
@@ -150,6 +151,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/rag', ragRoutes);
+app.use('/api/auth', authRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
