@@ -56,8 +56,12 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
 
   // Load matching jobs when component mounts or resume data changes
   useEffect(() => {
-    if (studentId && resumeData) {
+    console.log('🔍 MatchingJobs useEffect triggered:', { studentId, resumeData: !!resumeData });
+    if (studentId) {
+      console.log('✅ Student ID available, loading matching jobs');
       loadMatchingJobs();
+    } else {
+      console.log('❌ No student ID available');
     }
   }, [studentId, resumeData]);
 
@@ -232,6 +236,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
   };
 
   const loadMatchingJobs = async () => {
+    console.log('🔄 Loading matching jobs...', { studentId, resumeData });
     setIsLoading(true);
     setError(null);
     
@@ -336,7 +341,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
       }
 
       // Fallback to realistic job data if no real jobs available
-      console.log('No real jobs found, using realistic job data');
+      console.log('📊 No real jobs found, using realistic job data');
       const mockJobs = [
         {
           _id: 'real-job-1',
@@ -500,6 +505,7 @@ const MatchingJobs = ({ studentId, resumeData, onJobMatch }) => {
         }
       ];
 
+      console.log('✅ Setting matching jobs:', mockJobs.length, 'jobs');
       setMatchingJobs(mockJobs);
       setLastUpdated(new Date());
       setDataSource('realistic');
@@ -807,7 +813,7 @@ Application Tips:
               onClick={loadMatchingJobs}
               className="flex items-center gap-2 px-4 py-2 bg-brand-maroon text-white rounded-lg hover:bg-brand-crimson transition-colors duration-200 mx-auto"
             >
-              <RefreshCw size={16} />
+              <Target size={16} />
               Search Again
             </button>
           </div>
