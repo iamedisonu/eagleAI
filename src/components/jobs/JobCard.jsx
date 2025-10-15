@@ -287,7 +287,7 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
