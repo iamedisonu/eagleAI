@@ -21,17 +21,22 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import Student from '../models/Student.js';
 import Job from '../models/Job.js';
 import { analyzeResume } from '../services/googleAI.js';
+import SecureFileUpload from '../services/SecureFileUpload.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-// Configure multer for file uploads
+// Initialize secure file upload service
+const secureFileUpload = new SecureFileUpload();
+
+// Configure multer for temporary file storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads/resumes';
+    const uploadDir = 'uploads/temp';
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -39,23 +44,37 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `resume-${req.params.id}-${uniqueSuffix}${path.extname(file.originalname)}`);
+    cb(null, `temp-${req.params.id}-${uniqueSuffix}${path.extname(file.originalname)}`);
   }
 });
 
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'), false);
+      cb(new Error(`File type ${file.mimetype} not allowed. Allowed types: ${allowedTypes.join(', ')}`), false);
     }
   }
 });
+
+// Generate encryption password for student
+const generateEncryptionPassword = (studentId) => {
+  return crypto.createHash('sha256')
+    .update(studentId + process.env.FILE_ENCRYPTION_SALT || 'eagleai-default-salt')
+    .digest('hex');
+};
 
 // GET /api/students - List students
 router.get('/', async (req, res) => {
@@ -424,34 +443,57 @@ router.post('/:id/resume', upload.single('resume'), async (req, res) => {
       return res.status(404).json({ error: 'Student not found' });
     }
 
-    // Delete old resume file if it exists
-    if (student.resumeFile && student.resumeFile.filePath) {
+    // Generate encryption password for this student
+    const encryptionPassword = generateEncryptionPassword(student._id.toString());
+
+    // Process file with security measures (validation, virus scan, encryption)
+    const processResult = await secureFileUpload.processFileUpload(
+      req.file, 
+      student._id.toString(), 
+      encryptionPassword
+    );
+
+    if (!processResult.success) {
+      return res.status(400).json({ 
+        error: processResult.error,
+        scanResult: processResult.scanResult
+      });
+    }
+
+    // Delete old resume file from S3 if it exists
+    if (student.resumeFile && student.resumeFile.s3Key) {
       try {
-        fs.unlinkSync(student.resumeFile.filePath);
+        await secureFileUpload.deleteFromS3(student.resumeFile.s3Key);
       } catch (error) {
-        logger.warn('Could not delete old resume file:', error);
+        logger.warn('Could not delete old resume file from S3:', error);
       }
     }
 
-    // Update student with new resume file info
+    // Update student with new secure resume file info
     student.resumeFile = {
-      originalName: req.file.originalname,
-      fileName: req.file.filename,
-      filePath: req.file.path,
-      fileSize: req.file.size,
-      uploadedAt: new Date()
+      originalName: processResult.originalName,
+      secureFilename: processResult.secureFilename,
+      s3Key: processResult.s3Key,
+      fileSize: processResult.size,
+      uploadedAt: processResult.uploadedAt,
+      isEncrypted: true,
+      scanResult: processResult.scanResult
     };
 
     await student.save();
 
+    logger.info(`Resume uploaded securely for student ${student._id}: ${processResult.originalName}`);
+
     res.json({
-      message: 'Resume uploaded successfully',
+      message: 'Resume uploaded and secured successfully',
       resume: {
         id: student._id,
         fileName: student.resumeFile.originalName,
         fileUrl: `/api/students/${student._id}/resume/download`,
         uploadedAt: student.resumeFile.uploadedAt,
-        fileSize: student.resumeFile.fileSize
+        fileSize: student.resumeFile.fileSize,
+        isEncrypted: true,
+        scanResult: processResult.scanResult
       }
     });
 
@@ -459,7 +501,7 @@ router.post('/:id/resume', upload.single('resume'), async (req, res) => {
     logger.error('Error uploading resume:', error);
     
     // Clean up uploaded file on error
-    if (req.file) {
+    if (req.file && fs.existsSync(req.file.path)) {
       try {
         fs.unlinkSync(req.file.path);
       } catch (cleanupError) {
@@ -479,12 +521,24 @@ router.get('/:id/resume/download', async (req, res) => {
       return res.status(404).json({ error: 'Resume not found' });
     }
 
-    const filePath = student.resumeFile.filePath;
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Resume file not found on disk' });
-    }
+    // Generate encryption password for this student
+    const encryptionPassword = generateEncryptionPassword(student._id.toString());
 
-    res.download(filePath, student.resumeFile.originalName);
+    // Download and decrypt file from S3
+    const fileData = await secureFileUpload.downloadFromS3(
+      student.resumeFile.s3Key, 
+      encryptionPassword
+    );
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', fileData.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileData.originalName}"`);
+    res.setHeader('Content-Length', fileData.data.length);
+    res.setHeader('X-Original-Name', fileData.originalName);
+    res.setHeader('X-Uploaded-At', fileData.uploadedAt);
+
+    // Send decrypted file data
+    res.send(fileData.data);
 
   } catch (error) {
     logger.error('Error downloading resume:', error);
@@ -540,12 +594,15 @@ router.delete('/:id/resume', async (req, res) => {
       return res.status(404).json({ error: 'No resume found' });
     }
 
-    // Delete file from disk
-    if (student.resumeFile.filePath) {
+    // Delete file from S3
+    if (student.resumeFile.s3Key) {
       try {
-        fs.unlinkSync(student.resumeFile.filePath);
+        const deleteSuccess = await secureFileUpload.deleteFromS3(student.resumeFile.s3Key);
+        if (!deleteSuccess) {
+          logger.warn(`Failed to delete resume file from S3: ${student.resumeFile.s3Key}`);
+        }
       } catch (error) {
-        logger.warn('Could not delete resume file:', error);
+        logger.warn('Could not delete resume file from S3:', error);
       }
     }
 
@@ -554,6 +611,8 @@ router.delete('/:id/resume', async (req, res) => {
     student.resumeText = undefined;
     student.resumeAnalysis = undefined;
     await student.save();
+
+    logger.info(`Resume deleted for student ${student._id}`);
 
     res.json({ message: 'Resume deleted successfully' });
 

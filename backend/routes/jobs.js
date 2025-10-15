@@ -17,13 +17,19 @@ ENDPOINTS:
 
 import express from 'express';
 import mongoose from 'mongoose';
+import Joi from 'joi';
 import Job from '../models/Job.js';
+import CacheService from '../services/CacheService.js';
 import logger from '../utils/logger.js';
+import { validateQuery, validateParams, jobSchemas, commonSchemas } from '../middleware/validation.js';
 
 const router = express.Router();
 
+// Initialize cache service
+const cacheService = new CacheService();
+
 // GET /api/jobs - List jobs with filtering and pagination
-router.get('/', async (req, res) => {
+router.get('/', validateQuery(jobSchemas.jobQuery), async (req, res) => {
   try {
     // Check if database is connected
     if (mongoose.connection.readyState !== 1) {
@@ -50,6 +56,28 @@ router.get('/', async (req, res) => {
       sortOrder = 'desc',
       minMatchScore
     } = req.query;
+
+    // Create cache key for this query
+    const cacheParams = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      category: category || '',
+      jobType: jobType || '',
+      location: location || '',
+      search: search || '',
+      sortBy,
+      sortOrder,
+      minMatchScore: minMatchScore || 0
+    };
+
+    // Try to get from cache first
+    const cacheKey = `jobs_list:${JSON.stringify(cacheParams)}`;
+    const cachedResult = await cacheService.get(cacheKey);
+    
+    if (cachedResult) {
+      logger.debug('Serving jobs from cache');
+      return res.json(cachedResult);
+    }
 
     // Build query
     const query = { status: 'active' };
@@ -94,15 +122,21 @@ router.get('/', async (req, res) => {
       Job.countDocuments(query)
     ]);
 
-    res.json({
+    const result = {
       jobs,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
         total,
         pages: Math.ceil(total / parseInt(limit))
-      }
-    });
+      },
+      cachedAt: new Date().toISOString()
+    };
+
+    // Cache the result for 15 minutes
+    await cacheService.set(cacheKey, result, 900);
+
+    res.json(result);
 
   } catch (error) {
     logger.error('Error fetching jobs:', error);
@@ -111,15 +145,27 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/jobs/:id - Get specific job details
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateParams(Joi.object({ id: commonSchemas.objectId })), async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id)
+    const jobId = req.params.id;
+    
+    // Try to get from cache first
+    const cachedJob = await cacheService.getCachedJobDetails(jobId);
+    if (cachedJob) {
+      logger.debug('Serving job details from cache');
+      return res.json(cachedJob);
+    }
+
+    const job = await Job.findById(jobId)
       .populate('matchedStudents.studentId', 'name email university major')
       .lean();
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
     }
+
+    // Cache the job details
+    await cacheService.cacheJobDetails(jobId, job);
 
     res.json(job);
 

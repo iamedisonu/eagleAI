@@ -86,6 +86,7 @@ import JobScraper from './services/JobScraper.js';
 import ResumeMatcher from './services/ResumeMatcher.js';
 
 // Import routes
+import authRoutes from './routes/auth.js';
 import jobRoutes from './routes/jobs.js';
 import studentRoutes from './routes/students.js';
 import notificationRoutes from './routes/notifications.js';
@@ -145,6 +146,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/notifications', notificationRoutes);

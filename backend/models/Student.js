@@ -19,6 +19,20 @@ import mongoose from 'mongoose';
 
 const studentSchema = new mongoose.Schema({
   // Basic profile information
+  firstName: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+    maxlength: 50
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+    maxlength: 50
+  },
   name: {
     type: String,
     required: true,
@@ -36,6 +50,22 @@ const studentSchema = new mongoose.Schema({
       },
       message: 'Please provide a valid email address'
     }
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8
+  },
+  studentId: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true
+  },
+  role: {
+    type: String,
+    enum: ['student', 'admin', 'mentor'],
+    default: 'student'
   },
   university: {
     type: String,
@@ -57,12 +87,21 @@ const studentSchema = new mongoose.Schema({
   },
   resumeFile: {
     originalName: String,
-    fileName: String,
-    filePath: String,
+    secureFilename: String,
+    s3Key: String,
     fileSize: Number,
     uploadedAt: {
       type: Date,
       default: Date.now
+    },
+    isEncrypted: {
+      type: Boolean,
+      default: true
+    },
+    scanResult: {
+      isClean: Boolean,
+      threats: [String],
+      scanTime: Number
     }
   },
   resumeAnalysis: {
@@ -221,6 +260,21 @@ const studentSchema = new mongoose.Schema({
     default: Date.now
   },
   
+  // Authentication fields
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockedUntil: {
+    type: Date
+  },
+  resetPasswordToken: {
+    type: String
+  },
+  resetPasswordExpiry: {
+    type: Date
+  },
+  
   // Profile completion
   profileCompletion: {
     type: Number,
@@ -250,11 +304,16 @@ studentSchema.index({ university: 1, major: 1 });
 studentSchema.index({ isActive: 1, lastLogin: -1 });
 studentSchema.index({ embedding: 1 });
 
-// Pre-save middleware to calculate profile completion
+// Pre-save middleware to calculate profile completion and set name
 studentSchema.pre('save', function(next) {
+  // Set name from firstName and lastName
+  if (this.firstName && this.lastName) {
+    this.name = `${this.firstName} ${this.lastName}`;
+  }
+  
   let completion = 0;
   const fields = [
-    'name', 'email', 'university', 'major', 'graduationYear',
+    'firstName', 'lastName', 'email', 'university', 'major', 'graduationYear',
     'resumeText', 'skills', 'interests', 'careerGoals'
   ];
   
