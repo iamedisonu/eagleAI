@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import JobCard from './JobCard';
 import JobFilters from './JobFilters';
+import { CardSkeleton } from '../shared/LoadingSpinner';
 import { getMockJobMatches, updateJobMatchStatus, saveJob } from '../../services/mockJobData';
 
 const JobMatches = ({ studentId }) => {
@@ -236,13 +237,38 @@ const JobMatches = ({ studentId }) => {
     fetchJobMatches();
   };
 
+  // Keyboard navigation handler
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      setShowFilters(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex items-center gap-3">
-          <RefreshCw className="animate-spin text-brand-maroon" size={24} />
-          <span className="text-gray-600">Loading job matches...</span>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="bg-brand-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-300 rounded w-48 mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-64"></div>
+            </div>
+            <div className="h-10 bg-gray-300 rounded w-10"></div>
+          </div>
         </div>
+
+        {/* Search and filters skeleton */}
+        <div className="bg-brand-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 h-12 bg-gray-300 rounded animate-pulse"></div>
+            <div className="h-12 bg-gray-300 rounded w-40 animate-pulse"></div>
+            <div className="h-12 bg-gray-300 rounded w-24 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Job cards skeleton */}
+        <CardSkeleton count={6} />
       </div>
     );
   }
@@ -266,7 +292,14 @@ const JobMatches = ({ studentId }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onKeyDown={handleKeyDown}>
+      {/* Live region for dynamic updates */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {loading ? 'Loading job matches...' : 
+         error ? `Error: ${error}` : 
+         `${filteredJobs.length} job${filteredJobs.length !== 1 ? 's' : ''} found`}
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -293,20 +326,27 @@ const JobMatches = ({ studentId }) => {
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search jobs, companies, or skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-maroon focus:border-transparent"
+                aria-label="Search jobs by title, company, or skills"
+                aria-describedby="search-help"
               />
+            </div>
+            <div id="search-help" className="sr-only">
+              Search through available job listings by typing job titles, company names, or required skills
             </div>
           </div>
 
           {/* Sort */}
           <div className="flex items-center gap-2">
+            <label htmlFor="sort-select" className="sr-only">Sort jobs by</label>
             <select
+              id="sort-select"
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
                 const [field, order] = e.target.value.split('-');
@@ -314,6 +354,7 @@ const JobMatches = ({ studentId }) => {
                 setSortOrder(order);
               }}
               className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-maroon focus:border-transparent"
+              aria-label="Sort jobs by criteria"
             >
               <option value="matchScore-desc">Best Match</option>
               <option value="postedDate-desc">Newest First</option>
@@ -326,24 +367,30 @@ const JobMatches = ({ studentId }) => {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-brand-maroon focus:ring-offset-2 ${
               showFilters 
                 ? 'bg-brand-maroon text-white border-brand-maroon' 
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
+            aria-label={showFilters ? 'Hide job filters' : 'Show job filters'}
+            aria-expanded={showFilters}
+            aria-controls="job-filters-panel"
           >
-            <Filter size={20} />
-            Filters
+            <Filter size={20} aria-hidden="true" />
+            <span>Filters</span>
           </button>
         </div>
 
         {/* Filters Panel */}
         {showFilters && (
-          <JobFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            onClose={() => setShowFilters(false)}
-          />
+          <div id="job-filters-panel" role="region" aria-labelledby="filters-heading">
+            <h3 id="filters-heading" className="sr-only">Job Filters</h3>
+            <JobFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              onClose={() => setShowFilters(false)}
+            />
+          </div>
         )}
       </div>
 

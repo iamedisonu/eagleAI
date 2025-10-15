@@ -3,180 +3,264 @@
 FILE: src/components/ErrorBoundary.jsx
 ============================================================================
 PURPOSE:
-  React Error Boundary component that catches JavaScript errors anywhere in the
-  component tree and displays a fallback UI instead of crashing the entire app.
-  This provides graceful error handling and better user experience.
+  Enhanced error boundary component with Sentry integration for comprehensive error tracking.
+  Provides user-friendly error messages and detailed error reporting.
 
 FEATURES:
-  - Catches JavaScript errors in child components
-  - Displays user-friendly error message
-  - Provides refresh button for recovery
-  - Logs errors for debugging purposes
-  - Prevents entire app from crashing
-  - Customizable error UI with OC branding
-
-ARCHITECTURE:
-  - Class component (required for Error Boundary)
-  - Implements componentDidCatch lifecycle method
-  - Uses getDerivedStateFromError for state updates
-  - Renders fallback UI when errors occur
-  - Maintains error state for debugging
-
-ERROR HANDLING:
-  - Catches errors in render methods
-  - Catches errors in lifecycle methods
-  - Catches errors in constructors
-  - Does NOT catch errors in event handlers
-  - Does NOT catch errors in async code
-  - Does NOT catch errors during server-side rendering
-
-USAGE:
-  Wrap any component tree that might throw errors:
-  <ErrorBoundary>
-    <ComponentThatMightThrow />
-  </ErrorBoundary>
-
-PERFORMANCE CONSIDERATIONS:
-  - Only re-renders when errors occur
-  - Minimal impact on normal operation
-  - Efficient error state management
-  - Clean error recovery mechanism
+  - Sentry error reporting
+  - User-friendly error UI
+  - Error recovery options
+  - Performance monitoring
+  - Accessibility support
 ============================================================================
 */
 
 import React from 'react';
+import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import monitoringService from '../services/monitoringService';
 
-/**
- * Error Boundary Class Component
- * 
- * Catches JavaScript errors anywhere in the component tree and displays
- * a fallback UI. This prevents the entire application from crashing
- * when an error occurs in any child component.
- * 
- * @class ErrorBoundary
- * @extends {React.Component}
- */
+// Conditional Sentry import
+let Sentry = null;
+try {
+  Sentry = require('@sentry/react');
+} catch (error) {
+  console.warn('Sentry not available:', error.message);
+}
+
 class ErrorBoundary extends React.Component {
-  /**
-   * Constructor for ErrorBoundary component
-   * 
-   * @param {Object} props - Component props
-   */
   constructor(props) {
     super(props);
-    
-    // Initialize error state
-    this.state = { 
-      hasError: false,    // Flag indicating if an error occurred
-      error: null         // The error object that was thrown
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null,
+      retryCount: 0
     };
   }
 
-  /**
-   * Static method called when an error is thrown in a child component
-   * 
-   * This method is called during the render phase, so side effects are not allowed.
-   * It should return a state update to indicate that an error occurred.
-   * 
-   * @param {Error} error - The error that was thrown
-   * @returns {Object} State update object
-   */
   static getDerivedStateFromError(error) {
-    // Update state to indicate an error occurred and store the error
-    return { hasError: true, error };
+    // Update state so the next render will show the fallback UI
+    return {
+      hasError: true,
+      error
+    };
   }
 
-  /**
-   * Lifecycle method called when an error is caught
-   * 
-   * This method is called during the commit phase, so side effects are allowed.
-   * It's used for logging errors and performing cleanup operations.
-   * 
-   * @param {Error} error - The error that was thrown
-   * @param {Object} errorInfo - Additional error information
-   */
   componentDidCatch(error, errorInfo) {
-    // Log error for debugging purposes
+    // Log error details
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
-    // In production, you might want to send this to an error reporting service
-    // Example: errorReportingService.captureException(error, { extra: errorInfo });
+
+    // Update state with error details
+    // Send to Sentry
+    let errorId = null;
+    if (Sentry) {
+      errorId = Sentry.captureException(error, {
+        contexts: {
+          react: {
+            componentStack: errorInfo.componentStack
+          }
+        },
+        tags: {
+          component: this.props.componentName || 'Unknown',
+          boundary: 'ErrorBoundary'
+        },
+        extra: {
+          errorInfo,
+          retryCount: this.state.retryCount,
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
+    this.setState({
+      error,
+      errorInfo,
+      errorId
+    });
+
+    // Track error in monitoring service
+    monitoringService.trackError(error, {
+      component: this.props.componentName || 'ErrorBoundary',
+      action: 'component_error',
+      errorInfo: errorInfo.componentStack
+    });
   }
 
-  /**
-   * Render method that displays either the children or error UI
-   * 
-   * @returns {JSX.Element} Either the children components or error fallback UI
-   */
+  handleRetry = () => {
+    this.setState(prevState => ({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null,
+      retryCount: prevState.retryCount + 1
+    }));
+
+    // Track retry attempt
+    monitoringService.trackEvent('error_retry', {
+      component: this.props.componentName || 'ErrorBoundary',
+      retryCount: this.state.retryCount + 1
+    });
+  };
+
+  handleGoHome = () => {
+    window.location.href = '/';
+    monitoringService.trackEvent('error_go_home', {
+      component: this.props.componentName || 'ErrorBoundary'
+    });
+  };
+
+  handleReportBug = () => {
+    // Open Sentry issue if available
+    if (this.state.errorId) {
+      const sentryUrl = `https://sentry.io/organizations/your-org/issues/${this.state.errorId}/`;
+      window.open(sentryUrl, '_blank');
+    }
+
+    monitoringService.trackEvent('error_report_bug', {
+      component: this.props.componentName || 'ErrorBoundary',
+      errorId: this.state.errorId
+    });
+  };
+
   render() {
-    // If an error occurred, render the fallback UI
     if (this.state.hasError) {
+      // Custom error UI
+      if (this.props.fallback) {
+        return this.props.fallback(this.state.error, this.state.errorInfo, this.handleRetry);
+      }
+
+      // Default error UI
       return (
-        <div className="fixed inset-0 bg-red-100 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-4">
+        <div className="min-h-screen bg-brand-nearwhite-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-brand-white rounded-xl shadow-lg border border-gray-200 p-6">
             {/* Error Icon */}
-            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-              <svg 
-                className="w-6 h-6 text-red-600" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" 
-                />
-              </svg>
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+              <AlertTriangle className="w-8 h-8 text-red-600" aria-hidden="true" />
             </div>
-            
-            {/* Error Message */}
-            <h2 className="text-xl font-bold text-red-600 mb-4 text-center">
-              Something went wrong
-            </h2>
-            <p className="text-gray-700 mb-4 text-center">
-              We're sorry, but something unexpected happened. Please try refreshing the page.
+
+            {/* Error Title */}
+            <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
+              Oops! Something went wrong
+            </h1>
+
+            {/* Error Description */}
+            <p className="text-gray-600 text-center mb-6">
+              We're sorry, but something unexpected happened. Our team has been notified and is working to fix this issue.
             </p>
-            
-            {/* Recovery Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+
+            {/* Error ID for support */}
+            {this.state.errorId && (
+              <div className="bg-gray-50 rounded-lg p-3 mb-6">
+                <p className="text-sm text-gray-600 mb-1">Error ID:</p>
+                <code className="text-xs text-gray-800 font-mono break-all">
+                  {this.state.errorId}
+                </code>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
               <button
-                onClick={() => window.location.reload()}
-                className="bg-brand-maroon text-white px-4 py-2 rounded hover:bg-brand-crimson transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-maroon"
+                onClick={this.handleRetry}
+                className="w-full flex items-center justify-center gap-2 bg-brand-maroon text-brand-white px-4 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon focus:ring-offset-2"
+                aria-label="Try again"
               >
-                Refresh Page
-              </button>
-              <button
-                onClick={() => this.setState({ hasError: false, error: null })}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-              >
+                <RefreshCw size={20} aria-hidden="true" />
                 Try Again
               </button>
+
+              <button
+                onClick={this.handleGoHome}
+                className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                aria-label="Go to home page"
+              >
+                <Home size={20} aria-hidden="true" />
+                Go Home
+              </button>
+
+              {this.state.errorId && (
+                <button
+                  onClick={this.handleReportBug}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-100 text-blue-700 px-4 py-3 rounded-lg font-semibold hover:bg-blue-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label="Report this bug"
+                >
+                  <Bug size={20} aria-hidden="true" />
+                  Report Bug
+                </button>
+              )}
             </div>
-            
-            {/* Development Error Details */}
+
+            {/* Technical Details (collapsible) */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-                  Error Details (Development Only)
+              <details className="mt-6">
+                <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                  Technical Details (Development Only)
                 </summary>
-                <div className="mt-2 p-3 bg-gray-100 rounded text-xs font-mono text-gray-800 overflow-auto max-h-32">
-                  <pre className="whitespace-pre-wrap">
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                  <pre className="text-xs text-gray-800 whitespace-pre-wrap overflow-auto max-h-40">
                     {this.state.error.toString()}
+                    {this.state.errorInfo && this.state.errorInfo.componentStack}
                   </pre>
                 </div>
               </details>
             )}
+
+            {/* Accessibility announcement */}
+            <div className="sr-only" aria-live="polite" aria-atomic="true">
+              An error has occurred. Error ID: {this.state.errorId || 'unknown'}. 
+              Please try again or contact support if the problem persists.
+            </div>
           </div>
         </div>
       );
     }
 
-    // If no error occurred, render the children normally
     return this.props.children;
   }
 }
+
+// Higher-order component for easier usage
+export const withErrorBoundary = (Component, errorBoundaryProps = {}) => {
+  const WrappedComponent = (props) => (
+    <ErrorBoundary {...errorBoundaryProps}>
+      <Component {...props} />
+    </ErrorBoundary>
+  );
+
+  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  return WrappedComponent;
+};
+
+// Sentry integration (conditional)
+export const SentryErrorBoundary = Sentry ? Sentry.withErrorBoundary(ErrorBoundary, {
+  fallback: ({ error, resetError }) => (
+    <div className="min-h-screen bg-brand-nearwhite-1 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-brand-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+          <AlertTriangle className="w-8 h-8 text-red-600" aria-hidden="true" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
+          Something went wrong
+        </h1>
+        <p className="text-gray-600 text-center mb-6">
+          We've been notified about this error and are working to fix it.
+        </p>
+        <button
+          onClick={resetError}
+          className="w-full bg-brand-maroon text-brand-white px-4 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  ),
+  beforeCapture: (scope, error, errorInfo) => {
+    scope.setTag('errorBoundary', true);
+    scope.setContext('errorInfo', errorInfo);
+  }
+}) : ErrorBoundary;
 
 export default ErrorBoundary;

@@ -96,13 +96,21 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
   };
 
   return (
-    <div className="bg-brand-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <article 
+      className="bg-brand-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden focus-within:ring-2 focus-within:ring-brand-maroon focus-within:ring-opacity-50"
+      role="article"
+      aria-labelledby={`job-title-${job._id}`}
+      aria-describedby={`job-description-${job._id}`}
+    >
       {/* Header with match score and save button */}
       <div className="p-4 md:p-6 border-b border-gray-100">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg md:text-xl font-bold text-gray-900 line-clamp-2">
+              <h3 
+                id={`job-title-${job._id}`}
+                className="text-lg md:text-xl font-bold text-gray-900 line-clamp-2"
+              >
                 {job.title}
               </h3>
               {job.isNew && (
@@ -132,11 +140,13 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
             {/* Save Button */}
             <button
               onClick={handleSave}
-              className={`p-2 rounded-lg transition-colors duration-200 ${
+              className={`p-2 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon focus:ring-opacity-50 ${
                 isSaved 
                   ? 'text-accent-gold bg-accent-gold/10' 
                   : 'text-gray-400 hover:text-accent-gold hover:bg-accent-gold/10'
               }`}
+              aria-label={isSaved ? `Remove ${job.title} from saved jobs` : `Save ${job.title} for later`}
+              title={isSaved ? 'Remove from saved jobs' : 'Save job for later'}
             >
               {isSaved ? <Check size={20} /> : <Bookmark size={20} />}
             </button>
@@ -170,7 +180,10 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
 
       {/* Description */}
       <div className="p-4 md:p-6">
-        <p className="text-gray-700 text-sm md:text-base line-clamp-3 mb-4">
+        <p 
+          id={`job-description-${job._id}`}
+          className="text-gray-700 text-sm md:text-base line-clamp-3 mb-4"
+        >
           {job.shortDescription || job.description}
         </p>
 
@@ -221,25 +234,30 @@ const JobCard = ({ job, onApply, onSave, onViewDetails, showMatchScore = true })
           <button
             onClick={handleApply}
             disabled={isApplying || !job.applicationUrl || (job.urlStatus && !job.urlStatus.isValid)}
-            className="flex-1 bg-brand-maroon text-brand-white px-4 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 bg-brand-maroon text-brand-white px-4 py-3 rounded-lg font-semibold hover:bg-brand-crimson transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-brand-maroon focus:ring-offset-2"
+            aria-label={`Apply to ${job.title} at ${job.company}`}
+            aria-describedby={`job-${job._id}-description`}
           >
             {isApplying ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Applying...
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden="true"></div>
+                <span>Applying...</span>
               </>
             ) : (
               <>
-                <ExternalLink size={16} />
-                {!job.applicationUrl ? 'Application Unavailable' : 
-                 (job.urlStatus && !job.urlStatus.isValid) ? 'Link Expired' : 'Apply Now'}
+                <ExternalLink size={16} aria-hidden="true" />
+                <span>
+                  {!job.applicationUrl ? 'Application Unavailable' : 
+                   (job.urlStatus && !job.urlStatus.isValid) ? 'Link Expired' : 'Apply Now'}
+                </span>
               </>
             )}
           </button>
           
           <button
             onClick={handleViewDetails}
-            className="px-4 py-3 border border-brand-maroon text-brand-maroon rounded-lg font-semibold hover:bg-brand-maroon hover:text-brand-white transition-colors duration-200"
+            className="px-4 py-3 border border-brand-maroon text-brand-maroon rounded-lg font-semibold hover:bg-brand-maroon hover:text-brand-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon focus:ring-offset-2"
+            aria-label={`View details for ${job.title} at ${job.company}`}
           >
             View Details
           </button>

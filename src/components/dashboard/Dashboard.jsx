@@ -24,6 +24,7 @@ USAGE:
 */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, 
   Users, 
@@ -39,15 +40,28 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const Dashboard = ({ onNavigate }) => {
+const Dashboard = () => {
+  const navigate = useNavigate();
+  
   // Mock user data
   const userName = "Edison Uwamungu";
   const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   // Function to handle navigation with scroll to top
   const handleNavigation = (tab) => {
-    if (onNavigate) {
-      onNavigate(tab);
+    const routeMap = {
+      'dashboard': '/dashboard',
+      'career': '/career',
+      'mentorship': '/mentorship',
+      'projects': '/projects',
+      'roadmap': '/roadmap',
+      'skills': '/skills',
+      'resume': '/resume'
+    };
+    
+    const route = routeMap[tab];
+    if (route) {
+      navigate(route);
       // Scroll to top of the page
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
