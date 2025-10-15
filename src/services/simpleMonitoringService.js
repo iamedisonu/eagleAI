@@ -1,38 +1,21 @@
 /*
 ============================================================================
-FILE: src/services/monitoringService.js
+FILE: src/services/simpleMonitoringService.js
 ============================================================================
 PURPOSE:
-  Comprehensive monitoring service for error tracking, analytics, and performance monitoring.
-  Integrates Sentry for error tracking, Google Analytics for user behavior, and Web Vitals for performance.
+  Simplified monitoring service that works without external dependencies.
+  Provides basic error tracking and performance monitoring without Sentry or Web Vitals.
 
 FEATURES:
-  - Error tracking and reporting with Sentry
-  - User analytics with Google Analytics
-  - Performance monitoring with Web Vitals
-  - Custom event tracking
+  - Basic error tracking
   - Performance metrics collection
-  - User session tracking
+  - Event tracking
+  - Local storage for metrics
+  - No external dependencies
 ============================================================================
 */
 
-// Import web-vitals with dynamic import to avoid build issues
-let webVitals = null;
-try {
-  webVitals = require('web-vitals');
-} catch (error) {
-  console.warn('Web Vitals not available:', error.message);
-}
-
-// Conditional Sentry import
-let Sentry = null;
-try {
-  Sentry = require('@sentry/react');
-} catch (error) {
-  console.warn('Sentry not available:', error.message);
-}
-
-class MonitoringService {
+class SimpleMonitoringService {
   constructor() {
     this.isInitialized = false;
     this.analytics = null;
@@ -50,41 +33,16 @@ class MonitoringService {
    */
   async initialize(config = {}) {
     try {
-      // Initialize Sentry for error tracking
-      if (config.sentry?.dsn && Sentry) {
-        Sentry.init({
-          dsn: config.sentry.dsn,
-          environment: config.sentry.environment || 'development',
-          tracesSampleRate: config.sentry.tracesSampleRate || 0.1,
-          profilesSampleRate: config.sentry.profilesSampleRate || 0.1,
-          beforeSend(event) {
-            // Filter out non-critical errors in development
-            if (config.sentry.environment === 'development') {
-              if (event.exception) {
-                const error = event.exception.values[0];
-                if (error.type === 'ChunkLoadError' || error.type === 'Loading chunk') {
-                  return null; // Don't send chunk load errors
-                }
-              }
-            }
-            return event;
-          },
-        });
-      }
-
-      // Initialize Google Analytics
+      // Initialize Google Analytics if available
       if (config.analytics?.measurementId) {
         await this.initializeAnalytics(config.analytics);
       }
 
-      // Initialize Web Vitals monitoring
-      this.initializeWebVitals();
-
-      // Initialize custom performance monitoring
+      // Initialize basic performance monitoring
       this.initializePerformanceMonitoring();
 
       this.isInitialized = true;
-      console.log('Monitoring services initialized successfully');
+      console.log('Simple monitoring service initialized successfully');
     } catch (error) {
       console.error('Failed to initialize monitoring services:', error);
     }
@@ -127,40 +85,7 @@ class MonitoringService {
   }
 
   /**
-   * Initialize Web Vitals monitoring
-   */
-  initializeWebVitals() {
-    if (!webVitals) {
-      console.warn('Web Vitals not available, skipping initialization');
-      return;
-    }
-
-    try {
-      // Core Web Vitals
-      if (webVitals.getCLS) {
-        webVitals.getCLS((metric) => this.recordWebVital('CLS', metric));
-      }
-      if (webVitals.getFID) {
-        webVitals.getFID((metric) => this.recordWebVital('FID', metric));
-      }
-      if (webVitals.getLCP) {
-        webVitals.getLCP((metric) => this.recordWebVital('LCP', metric));
-      }
-
-      // Additional metrics
-      if (webVitals.getFCP) {
-        webVitals.getFCP((metric) => this.recordWebVital('FCP', metric));
-      }
-      if (webVitals.getTTFB) {
-        webVitals.getTTFB((metric) => this.recordWebVital('TTFB', metric));
-      }
-    } catch (error) {
-      console.error('Error initializing Web Vitals:', error);
-    }
-  }
-
-  /**
-   * Initialize custom performance monitoring
+   * Initialize basic performance monitoring
    */
   initializePerformanceMonitoring() {
     // Monitor page load performance
@@ -190,45 +115,6 @@ class MonitoringService {
       });
       longTaskObserver.observe({ entryTypes: ['longtask'] });
     }
-  }
-
-  /**
-   * Record Web Vital metric
-   * @param {string} name - Metric name
-   * @param {Object} metric - Metric data
-   */
-  recordWebVital(name, metric) {
-    const data = {
-      name,
-      value: metric.value,
-      delta: metric.delta,
-      id: metric.id,
-      navigationType: metric.navigationType,
-      timestamp: Date.now()
-    };
-
-    this.performanceMetrics[name] = data;
-
-    // Send to analytics
-    if (this.analytics) {
-      this.analytics('event', 'web_vital', {
-        metric_name: name,
-        metric_value: Math.round(metric.value),
-        metric_delta: Math.round(metric.delta)
-      });
-    }
-
-    // Send to Sentry
-    if (Sentry) {
-      Sentry.addBreadcrumb({
-        category: 'web-vital',
-        message: `${name}: ${Math.round(metric.value)}`,
-        level: 'info',
-        data
-      });
-    }
-
-    console.log(`Web Vital recorded: ${name} = ${Math.round(metric.value)}`);
   }
 
   /**
@@ -272,16 +158,6 @@ class MonitoringService {
       this.analytics('event', eventName, parameters);
     }
 
-    // Send to Sentry as breadcrumb
-    if (Sentry) {
-      Sentry.addBreadcrumb({
-        category: 'user-action',
-        message: eventName,
-        level: 'info',
-        data: parameters
-      });
-    }
-
     console.log(`Event tracked: ${eventName}`, parameters);
   }
 
@@ -302,20 +178,6 @@ class MonitoringService {
       });
     }
 
-    // Send to Sentry
-    if (Sentry) {
-      Sentry.addBreadcrumb({
-        category: 'navigation',
-        message: `Page view: ${pageName}`,
-        level: 'info',
-        data: {
-          pageName,
-          pagePath,
-          pageViews: this.userSession.pageViews
-        }
-      });
-    }
-
     console.log(`Page view tracked: ${pageName} (${pagePath})`);
   }
 
@@ -325,17 +187,6 @@ class MonitoringService {
    * @param {Object} context - Additional context
    */
   trackError(error, context = {}) {
-    // Send to Sentry
-    if (Sentry) {
-      Sentry.captureException(error, {
-        tags: {
-          component: context.component || 'unknown',
-          action: context.action || 'unknown'
-        },
-        extra: context
-      });
-    }
-
     // Track as custom event
     this.trackEvent('error_occurred', {
       error_message: error.message,
@@ -353,15 +204,6 @@ class MonitoringService {
    * @param {Object} userData - User data
    */
   trackUserSession(userData) {
-    // Set user context in Sentry
-    if (Sentry) {
-      Sentry.setUser({
-        id: userData.id,
-        email: userData.email,
-        username: userData.name
-      });
-    }
-
     // Track user properties in analytics
     if (this.analytics) {
       this.analytics('config', 'user_properties', {
@@ -437,35 +279,11 @@ class MonitoringService {
   }
 
   /**
-   * Set custom tags for Sentry
-   * @param {Object} tags - Tags to set
-   */
-  setCustomTags(tags) {
-    if (Sentry) {
-      Sentry.setTags(tags);
-    }
-  }
-
-  /**
-   * Set custom context for Sentry
-   * @param {string} key - Context key
-   * @param {Object} context - Context data
-   */
-  setCustomContext(key, context) {
-    if (Sentry) {
-      Sentry.setContext(key, context);
-    }
-  }
-
-  /**
    * Flush all pending data
    */
   async flush() {
     try {
-      if (Sentry) {
-        await Sentry.flush();
-      }
-      console.log('Monitoring data flushed');
+      console.log('Simple monitoring data flushed');
     } catch (error) {
       console.error('Failed to flush monitoring data:', error);
     }
@@ -473,6 +291,6 @@ class MonitoringService {
 }
 
 // Create singleton instance
-const monitoringService = new MonitoringService();
+const simpleMonitoringService = new SimpleMonitoringService();
 
-export default monitoringService;
+export default simpleMonitoringService;

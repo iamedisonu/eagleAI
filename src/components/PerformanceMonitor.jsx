@@ -17,7 +17,7 @@ FEATURES:
 
 import React, { useState, useEffect } from 'react';
 import { Activity, Zap, Clock, Database, AlertTriangle } from 'lucide-react';
-import monitoringService from '../services/monitoringService';
+import monitoringService from '../services/simpleMonitoringService';
 
 const PerformanceMonitor = ({ showDetails = false, isVisible = false }) => {
   const [metrics, setMetrics] = useState({});

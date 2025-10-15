@@ -59,7 +59,7 @@ import FloatingMentorButton from './components/eagle-mentor/FloatingMentorButton
 import EagleMentorPanel from './components/eagle-mentor/EagleMentorPanel';
 import ErrorBoundary from './components/ErrorBoundary';
 import PerformanceMonitor from './components/PerformanceMonitor';
-import monitoringService from './services/monitoringService';
+import monitoringService from './services/simpleMonitoringService';
 import { useNavigation } from './hooks/useNavigation';
 import { 
   Home,

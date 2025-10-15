@@ -17,7 +17,7 @@ FEATURES:
 
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
-import monitoringService from '../services/monitoringService';
+import monitoringService from '../services/simpleMonitoringService';
 
 // Conditional Sentry import
 let Sentry = null;
