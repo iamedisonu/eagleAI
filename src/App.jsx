@@ -47,31 +47,14 @@ PERFORMANCE CONSIDERATIONS:
 ============================================================================
 */
 
-import { useState, useEffect } from 'react';
 import { AppProvider } from './context/AppProvider';
 import { EagleMentorProvider } from './context/EagleMentorProvider';
 import { NotificationProvider } from './context/NotificationProvider';
 import { NavigationProvider } from './context/NavigationProvider';
 import AppRouter from './router/AppRouter';
-import NotificationBell from './components/shared/NotificationBell';
-import UniversalSearch from './components/shared/UniversalSearch';
+import ErrorBoundary from './components/ErrorBoundary';
 import FloatingMentorButton from './components/eagle-mentor/FloatingMentorButton';
 import EagleMentorPanel from './components/eagle-mentor/EagleMentorPanel';
-import ErrorBoundary from './components/ErrorBoundary';
-import PerformanceMonitor from './components/PerformanceMonitor';
-import monitoringService from './services/simpleMonitoringService';
-import { useNavigation } from './hooks/useNavigation';
-import { 
-  Home,
-  TrendingUp, 
-  Users, 
-  Briefcase, 
-  Brain, 
-  Code,
-  FileText,
-  Menu,
-  X
-} from 'lucide-react';
 
 /**
  * Main App Component
@@ -85,7 +68,6 @@ import {
  * @returns {JSX.Element} The complete application UI
  */
 const App = () => {
-
   return (
     <AppProvider>
       <EagleMentorProvider>

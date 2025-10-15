@@ -24,16 +24,14 @@ export default defineConfig({
     port: 3000,
     strictPort: false,
     open: true,
-    host: true
+    host: true,
+    hmr: {
+      overlay: true
+    }
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      input: {
-        main: './index.html'
-      }
-    }
+    sourcemap: true
   },
   resolve: {
     alias: {
@@ -42,6 +40,9 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react']
   }
 })
 
