@@ -5,7 +5,7 @@
   <h3>AI-Powered Career Intelligence for Students</h3>
   <p>Make informed career decisions through data-driven insights, mentorship matching, and personalized learning paths.</p>
   
-  [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/your-org/eagleai)
+  [![Project](https://img.shields.io/badge/project-EagleAI-2563eb)](https://github.com/iamedisonu/eagleAI)
   [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
   [![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](package.json)
   [![React Version](https://img.shields.io/badge/react-18.2.0-blue)](package.json)
@@ -126,7 +126,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/eagleai.git
+   git clone https://github.com/iamedisonu/eagleAI.git
    cd eagleai
    ```
 
@@ -386,8 +386,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: Check our comprehensive docs
-- **Issues**: [GitHub Issues](https://github.com/your-org/eagleai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/eagleai/discussions)
+- **Issues**: [GitHub Issues](https://github.com/iamedisonu/eagleAI/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/iamedisonu/eagleAI/discussions)
 - **Email**: support@eagleai.com
 
 ---
